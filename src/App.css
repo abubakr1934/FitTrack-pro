@@ -1,0 +1,19 @@
+.bg-image{
+    background-color: rgb(30, 111, 241) !important;
+}
+.icon-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    margin: 0 10px;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.icon-circle:hover {
+    border-color: #888;
+}
