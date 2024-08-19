@@ -65,7 +65,8 @@ const SignUp = () => {
 
   return (
     <div className="bg-image">
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 bg-image">
+      <div className="min-h-screen flex flex-row align-middle items-center justify-center bg-gray-100 bg-image gap-4">
+
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
           <h2 className="text-2xl font-bold mb-6 text-gray-800">Sign Up</h2>
           <div className="flex justify-center mb-2">
@@ -116,7 +117,7 @@ const SignUp = () => {
             <div className="flex flex-row justify-center gap-4">
               <button
                 type="submit"
-                className="w-1/3 bg-blue-500 text-white p-2 mt-4 hover:bg-blue-600 rounded-3xl mb-2"
+                className="w-1/3 bg-blue-600 text-white p-2 mt-4 hover:bg-blue-600 rounded-3xl mb-2"
               >
                 SIGN UP
               </button>
@@ -131,6 +132,7 @@ const SignUp = () => {
             </div>
           </form>
         </div>
+        
       </div>
     </div>
   );

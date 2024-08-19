@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
 import heroImage1 from '../../assets/heroimage1.jpg'; 
 import heroImage2 from '../../assets/heroimage2.jpg';
+import HeroImage3 from '../../assets/HeroImage3.jpg'
 import { Link } from 'react-router-dom';
 import 'animate.css';
 
 const slides = [
+  {
+    image:HeroImage3,
+    title:"Change your food habits to the better side",
+    description:"explore our personalised diet plans for your goals and fast track your nutrition and food choices"
+  },
   {
     image: heroImage1,
     title: "Transform Your Fitness Journey",
@@ -15,6 +21,7 @@ const slides = [
     title: "Reach Your Fitness Goals",
     description: "Explore our expert-designed programs and start seeing results today."
   }
+  
 ];
 
 const HeroSection = () => {
@@ -29,7 +36,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative h-screen overflow-hidden">
+    <section className="relative h-screen overflow-hidden ">
       <div 
         className="relative bg-cover bg-center h-full"
         style={{ 
