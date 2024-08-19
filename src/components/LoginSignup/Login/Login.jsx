@@ -1,68 +1,70 @@
 import React, { useState } from "react";
-import { auth, googleProvider, FacebookProvider } from "../../../config/Firebase";
+import { auth, googleProvider, facebookProvider } from "../../../config/Firebase";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { SiGmail } from "react-icons/si";
 import { FaFacebook } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import '../../../App.css';
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [success,setSuccess]=useState("");
+  const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
 
   const handleGoogleLogin = async (e) => {
     e.preventDefault();
     try {
-      await signInWithPopup(auth, googleProvider);
-      setSuccess("Logged in Successfully- redirecting right now ");
-      console.log("Google login successful");
+      const result = await signInWithPopup(auth, googleProvider);
+      setSuccess("Logged in Successfully - redirecting right now");
+      navigate(`/dashboard/${result.user.uid}`);
     } catch (error) {
-      console.error("Error during Google login:", error);
-      setSuccess("");
+      handleAuthError(error);
     }
   };
 
   const handleFacebookLogin = async (e) => {
     e.preventDefault();
     try {
-      await signInWithPopup(auth, FacebookProvider);
-      console.log("Facebook login successful");
-      setSuccess("Logged in Successfully- redirecting right now ");
+      const result = await signInWithPopup(auth, facebookProvider);
+      setSuccess("Logged in Successfully - redirecting right now");
+      navigate(`/dashboard/${result.user.uid}`);
     } catch (error) {
-      console.error("Error during Facebook login:", error);
-      setSuccess("");
+      handleAuthError(error);
     }
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-
+    setSuccess("");
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      console.log("User logged in successfully");
-      setSuccess("Logged in Successfully- redirecting right now ");
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      setSuccess("Logged in Successfully - redirecting right now");
+      navigate(`/dashboard/${userCredential.user.uid}`);
     } catch (error) {
-      console.error("Error during email login:", error);
-      setSuccess("");
-      switch (error.code) {
-        case 'auth/invalid-credential':
-          setError("Invalid email or password .");
-          break;
-        case 'auth/user-disabled':
-          setError("This user has been disabled.");
-          break;
-        case 'auth/user-not-found':
-          setError("No user found with this email.");
-          break;
-        case 'auth/wrong-password':
-          setError("Incorrect password.");
-          break;
-        default:
-          setError("Failed to log in. Please try again.");
-      }
+      handleAuthError(error);
+    }
+  };
+
+  const handleAuthError = (error) => {
+    setSuccess("");
+    switch (error.code) {
+      case 'auth/invalid-credential':
+        setError("Invalid email or password.");
+        break;
+      case 'auth/user-disabled':
+        setError("This user has been disabled.");
+        break;
+      case 'auth/user-not-found':
+        setError("No user found with this email.");
+        break;
+      case 'auth/wrong-password':
+        setError("Incorrect password.");
+        break;
+      default:
+        setError("Failed to log in. Please try again.");
     }
   };
 
@@ -105,7 +107,6 @@ const Login = () => {
                 required
               />
             </div>
-      
             <div className="flex flex-row justify-center gap-4">
               <button
                 type="submit"
@@ -121,10 +122,9 @@ const Login = () => {
                   <Link to="/signup">Sign up now!</Link>
                 </span>
               </p>
-              
             </div>
-            {error && <div className="text-red-500 mb-4 text-lg text-center">{error}</div>} 
-            {success && <div className="text-green-500 mb-4 text-lg text-center">{success}</div>} 
+            {error && <div className="text-red-500 mb-4 text-lg text-center">{error}</div>}
+            {success && <div className="text-green-500 mb-4 text-lg text-center">{success}</div>}
           </form>
         </div>
       </div>

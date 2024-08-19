@@ -1,14 +1,11 @@
 import React, { useState } from "react";
-import {
-  auth,
-  googleProvider,
-  FacebookProvider,
-} from "../../../config/Firebase";
+import { auth, firestore, googleProvider, facebookProvider } from "../../../config/Firebase";
 import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
-import "../../../App.css";
+import { doc, setDoc } from "firebase/firestore";
 import { SiGmail } from "react-icons/si";
 import { FaFacebook } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import "../../../App.css";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -16,6 +13,7 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
 
   const signIn = async (e) => {
     e.preventDefault();
@@ -24,8 +22,18 @@ const SignUp = () => {
       return;
     }
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Create a user document in Firestore
+      await setDoc(doc(firestore, "users", user.uid), {
+        email: user.email,
+        createdAt: new Date(),
+        displayName: user.displayName || "Anonymous User"
+      });
+
       setSuccess("Account created successfully - redirecting now.");
+      navigate(`/dashboard/${user.uid}`);
     } catch (error) {
       handleAuthError(error);
     }
@@ -34,8 +42,18 @@ const SignUp = () => {
   const signInWithGoogle = async (e) => {
     e.preventDefault();
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      // Create or update a user document in Firestore
+      await setDoc(doc(firestore, "users", user.uid), {
+        email: user.email,
+        displayName: user.displayName || "anonymous user",
+        createdAt: new Date()
+      });
+
       setSuccess("Logged in successfully with Google - redirecting now.");
+      navigate(`/dashboard/${user.uid}`);
     } catch (error) {
       handleAuthError(error);
     }
@@ -44,8 +62,18 @@ const SignUp = () => {
   const signInWithFacebook = async (e) => {
     e.preventDefault();
     try {
-      await signInWithPopup(auth, FacebookProvider);
+      const result = await signInWithPopup(auth, facebookProvider);
+      const user = result.user;
+
+      // Create or update a user document in Firestore
+      await setDoc(doc(firestore, "users", user.uid), {
+        email: user.email,
+        displayName: user.displayName,
+        createdAt: new Date()
+      });
+
       setSuccess("Logged in successfully with Facebook - redirecting now.");
+      navigate(`/dashboard/${user.uid}`);
     } catch (error) {
       handleAuthError(error);
     }
@@ -66,7 +94,6 @@ const SignUp = () => {
   return (
     <div className="bg-image">
       <div className="min-h-screen flex flex-row align-middle items-center justify-center bg-gray-100 bg-image gap-4">
-
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
           <h2 className="text-2xl font-bold mb-6 text-gray-800">Sign Up</h2>
           <div className="flex justify-center mb-2">
@@ -132,7 +159,6 @@ const SignUp = () => {
             </div>
           </form>
         </div>
-        
       </div>
     </div>
   );
