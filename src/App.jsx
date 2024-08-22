@@ -8,12 +8,12 @@ import Login from './components/LoginSignup/Login/Login'
 import { Home } from './components/Home/Home'
 import { Features } from './components/Features/Features'
 import { Reviews } from './components/Reviews/Reviews'
-
+import Dashboard from './components/Dashboard/Dashboard'
 
 function App() {
   return (
     <>
-      <Router>
+      {/* <Router>
         
         <Routes>
           <Route path='/login' element={<Login/>}></Route>
@@ -21,8 +21,9 @@ function App() {
           <Route path='/signup' element={<SignUp/>}></Route>
           {/* <Route path='/Features' element={<Features/>}></Route>
           <Route path='/Reviews' element={<Reviews/>}></Route> */}
-        </Routes>
-      </Router>
+        {/* </Routes>
+      </Router> */ }
+      <Dashboard></Dashboard>
     </>
   )
 }
