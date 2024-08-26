@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import NavbarDashboard from "./NavbarDashboard";
 import BodyFatCalculator from "./BodyFatCalculator/BodyFatCalculator";
+import Exercise from "./Exercise/Exercise"; 
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("Dashboard");
@@ -12,7 +13,7 @@ const Dashboard = () => {
       case "Calories":
         return <div>Calories Component</div>;
       case "Exercises":
-        return <div>Exercises Component</div>;
+        return <Exercise />; 
       case "Personalised Diet Plan":
         return <div>Personalised Diet Plan Component</div>;
       default:
