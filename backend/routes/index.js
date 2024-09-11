@@ -4,9 +4,11 @@ const cors=require("cors");
 const app=express();
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
+const Exercise = require("../models/calorieBurnt.model");
 const { authenticateToken } = require("../utilities.js")
 const config = require("../configuration/config.json");
 const mongoose = require("mongoose");
+const { access } = require("fs");
 mongoose.connect(config.connectionString);
 const ACCESS_TOKEN_SECRET="bff01826f614cc3eb42faf5e1812a984d2eabe53d3b60f007dd743a2bb478e6c264ac28859f4b0b8a9527363826f2e35e0db8e6292e76b9c960aa8135f957ca9"   
 app.use(express.json());
@@ -86,6 +88,7 @@ app.post("/login", async (req, res) => {
             const accessToken = jwt.sign(userPayload, ACCESS_TOKEN_SECRET, {
                 expiresIn: "36000m",
             });
+            console.log(accessToken)
             return res.json({
                 error: false,
                 message: "Login Successful",
@@ -103,6 +106,38 @@ app.post("/login", async (req, res) => {
             error: true,
             message: "An error occurred during login",
             details: error.message,
+        });
+    }
+});
+app.post("/addExercise", authenticateToken, async (req, res) => {
+    const { exercises, totalCaloriesBurned } = req.body;
+    const { user } = req.user;
+
+    if (!exercises) {
+        return res.json({
+            error: true,
+            message: "Add exercise before pressing enter"
+        });
+    }
+
+    try {
+        const newExercise = new Exercise({
+            user: user._id,
+            exercises: exercises,
+            totalCaloriesBurned: totalCaloriesBurned
+        });
+
+        await newExercise.save();
+        return res.status(200).json({
+            error: false,
+            newExercise,
+            message: "Exercise added successfully"
+        });
+    } catch (err) {
+        return res.status(500).json({
+            error: true,
+            message: "An error occurred while adding the exercise",
+            details: err.message
         });
     }
 });
