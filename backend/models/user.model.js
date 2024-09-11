@@ -23,7 +23,7 @@ const user = new mongoose.Schema({
         type:Number,
         default:25,
     },
-    historyeight:{
+    height:{
         type:Number,
         default:25,
     },
