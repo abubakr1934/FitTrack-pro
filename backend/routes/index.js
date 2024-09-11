@@ -1,148 +1,178 @@
 require("dotenv").config();
-const express=require("express");
-const cors=require("cors");
-const app=express();
+const express = require("express");
+const cors = require("cors");
+const app = express();
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 const Exercise = require("../models/calorieBurnt.model");
-const { authenticateToken } = require("../utilities.js")
+const { authenticateToken } = require("../utilities.js");
 const config = require("../configuration/config.json");
 const mongoose = require("mongoose");
 const { access } = require("fs");
 mongoose.connect(config.connectionString);
-const ACCESS_TOKEN_SECRET="bff01826f614cc3eb42faf5e1812a984d2eabe53d3b60f007dd743a2bb478e6c264ac28859f4b0b8a9527363826f2e35e0db8e6292e76b9c960aa8135f957ca9"   
+const ACCESS_TOKEN_SECRET =
+  "bff01826f614cc3eb42faf5e1812a984d2eabe53d3b60f007dd743a2bb478e6c264ac28859f4b0b8a9527363826f2e35e0db8e6292e76b9c960aa8135f957ca9";
 app.use(express.json());
 app.use(
-    cors({
-        origin:"*",
-    })
-)
-app.post("/signup",async (req,res)=>{
-    const {fullname,email,password,confirmPassword}=req.body;
-    if(!fullname || !email){
-        return res.status(400).json({
-            error:true,
-            message:"enter full name and email",
-        })
-    }
-    if(password!==confirmPassword){
-        return res.status(400).json({
-            error:true,
-            message:"passwords not matching",
-        })
-    }
-    const isUser=await User.findOne({email:email})//email as the differentiating key
-    if(isUser){
-        //exists already
-        return res.status(200).json({
-            error:true,
-            message:"User already exists"
-        })
-    }
-    else{
-        const newUser=new User({
-            fullname,
-            email,
-            password
-        })//new user created with the given details and remaining will be put default as in the model schema
-        await newUser.save();
-        const accessToken = jwt.sign({ newUser }, ACCESS_TOKEN_SECRET, {
-            expiresIn: "36000m",
-        });//generated access token for the user
-        console.log(newUser)
-        return res.status(200).json({      
-            newUser,
-            accessToken,
-            message:"Registration was successfull"
-        })
-        
-    }
-    
-})
+  cors({
+    origin: "*",
+  })
+);
+app.post("/signup", async (req, res) => {
+  const { fullname, email, password, confirmPassword } = req.body;
+  if (!fullname || !email) {
+    return res.status(400).json({
+      error: true,
+      message: "enter full name and email",
+    });
+  }
+  if (password !== confirmPassword) {
+    return res.status(400).json({
+      error: true,
+      message: "passwords not matching",
+    });
+  }
+  const isUser = await User.findOne({ email: email }); //email as the differentiating key
+  if (isUser) {
+    //exists already
+    return res.status(200).json({
+      error: true,
+      message: "User already exists",
+    });
+  } else {
+    const newUser = new User({
+      fullname,
+      email,
+      password,
+    }); //new user created with the given details and remaining will be put default as in the model schema
+    await newUser.save();
+    const accessToken = jwt.sign({ newUser }, ACCESS_TOKEN_SECRET, {
+      expiresIn: "36000m",
+    }); //generated access token for the user
+    console.log(newUser);
+    return res.status(200).json({
+      newUser,
+      accessToken,
+      message: "Registration was successfull",
+    });
+  }
+});
 app.post("/login", async (req, res) => {
-    const { email, password } = req.body;
-    if (!email) {
-        return res.status(400).json({
-            error: true,
-            message: "Please enter your email"
-        });
-    }
-    if (!password) {
-        return res.status(400).json({
-            error: true,
-            message: "Please enter your password"
-        });
+  const { email, password } = req.body;
+  if (!email) {
+    return res.status(400).json({
+      error: true,
+      message: "Please enter your email",
+    });
+  }
+  if (!password) {
+    return res.status(400).json({
+      error: true,
+      message: "Please enter your password",
+    });
+  }
+
+  try {
+    const isUser = await User.findOne({ email: email });
+    if (!isUser) {
+      return res.status(400).json({
+        error: true,
+        message: "User does not exist, please sign up",
+      });
     }
 
-    try {
-        const isUser = await User.findOne({ email: email });
-        if (!isUser) {
-            return res.status(400).json({
-                error: true,
-                message: "User does not exist, please sign up"
-            });
-        }
-
-        if (isUser.password === password) {
-            const userPayload = { user: isUser };
-            const accessToken = jwt.sign(userPayload, ACCESS_TOKEN_SECRET, {
-                expiresIn: "36000m",
-            });
-            console.log(accessToken)
-            return res.json({
-                error: false,
-                message: "Login Successful",
-                email,
-                accessToken,
-            });
-        } else {
-            return res.status(400).json({
-                error: true,
-                message: "Invalid credentials"
-            });
-        }
-    } catch (error) {
-        return res.status(500).json({
-            error: true,
-            message: "An error occurred during login",
-            details: error.message,
-        });
+    if (isUser.password === password) {
+      const userPayload = { user: isUser };
+      const accessToken = jwt.sign(userPayload, ACCESS_TOKEN_SECRET, {
+        expiresIn: "36000m",
+      });
+      console.log(accessToken);
+      return res.json({
+        error: false,
+        message: "Login Successful",
+        email,
+        accessToken,
+      });
+    } else {
+      return res.status(400).json({
+        error: true,
+        message: "Invalid credentials",
+      });
     }
+  } catch (error) {
+    return res.status(500).json({
+      error: true,
+      message: "An error occurred during login",
+      details: error.message,
+    });
+  }
 });
 app.post("/addExercise", authenticateToken, async (req, res) => {
-    const { exercises, totalCaloriesBurned } = req.body;
+  const { exercises, totalCaloriesBurned } = req.body;
+  const { user } = req.user;
+
+  if (!exercises) {
+    return res.json({
+      error: true,
+      message: "Add exercise before pressing enter",
+    });
+  }
+
+  try {
+    const newExercise = new Exercise({
+      user: user._id,
+      exercises: exercises,
+      totalCaloriesBurned: totalCaloriesBurned,
+    });
+
+    await newExercise.save();
+    return res.status(200).json({
+      error: false,
+      newExercise,
+      message: "Exercise added successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: true,
+      message: "An error occurred while adding the exercise",
+      details: err.message,
+    });
+  }
+});
+app.put("/editExercise/:exerciseId", authenticateToken, async (req, res) => {
+    const { exerciseId } = req.params.exerciseId;
     const { user } = req.user;
-
-    if (!exercises) {
-        return res.json({
-            error: true,
-            message: "Add exercise before pressing enter"
-        });
-    }
-
+    const { exercises, date, totalCaloriesBurned } = req.body;
+  
     try {
-        const newExercise = new Exercise({
-            user: user._id,
-            exercises: exercises,
-            totalCaloriesBurned: totalCaloriesBurned
+      const exc = await Exercise.findOne({ user: user._id, _id: exerciseId });
+  
+      if (!exc) {
+        return res.status(400).json({
+          error: true,
+          message: "No exercise found",
         });
-
-        await newExercise.save();
-        return res.status(200).json({
-            error: false,
-            newExercise,
-            message: "Exercise added successfully"
-        });
-    } catch (err) {
-        return res.status(500).json({
-            error: true,
-            message: "An error occurred while adding the exercise",
-            details: err.message
-        });
+      }
+      if (exercises) exc.exercises = exercises;
+      if (date) exc.date = date;
+      if (totalCaloriesBurned) exc.totalCaloriesBurned = totalCaloriesBurned;
+      await exc.save();
+  
+      return res.json({
+        error: false,
+        exc,
+        message: "Exercise details updated successfully",
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        error: true,
+        message: "Internal server error",
+      });
     }
-});
+  });
 
-app.listen(8000,()=>{
-    console.log("server is running at port 8000")
+app.listen(8000, () => {
+  console.log("server is running at port 8000");
 });
-module.exports=app;
+module.exports = app;
