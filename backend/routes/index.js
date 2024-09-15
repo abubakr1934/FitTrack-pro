@@ -204,6 +204,40 @@ app.delete("/deleteExercise/:exerciseId",authenticateToken,async(req,res)=>{
     });
   }
 })
+app.post("/addCalorieIntake", authenticateToken, async (req, res) => {
+  const { foodItems } = req.body;
+  const { user } = req.user;
+  if (!foodItems || foodItems.length === 0) {
+    return res.status(400).json({
+      error: true,
+      message: "Please add at least one food item",
+    });
+  }
+
+  try {
+
+    const newCalorieIntake = new CalorieIntake({
+      user: user._id,
+      foodItems: foodItems,
+    });
+
+
+    await newCalorieIntake.save();
+
+
+    return res.status(200).json({
+      error: false,
+      newCalorieIntake,
+      message: "Calorie intake added successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: true,
+      message: "An error occurred while adding calorie intake",
+      details: err.message,
+    });
+  }
+});
 app.listen(8000, () => {
   console.log("server is running at port 8000");
 });
