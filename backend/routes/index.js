@@ -334,6 +334,69 @@ app.delete("/deleteCalorieIntake/:calorieIntakeId", authenticateToken, async (re
     });
   }
 });
+//all exercises
+app.get("/getAllExercises",authenticateToken,async(req,res)=>{
+  const {user} =req.user;
+  if(!user){
+    return res.json({
+      error:true,
+      message:"user not found"
+    })
+  }
+  try{
+    const excs=await Exercise.find({user:user._id});
+    if(!excs){  
+      return res.json({
+        error:true,
+        message:"exercises not found"
+      })
+    }
+    return res.status(200).json({
+      error:true,
+      excs,
+      message:"exercises returned successfully"
+
+    })
+  }
+  catch(error){
+    return res.json({
+      error:true,
+      message:"Internal error occured"
+    })
+  }
+})
+
+//all food items
+app.get("/getAllFoodItems",authenticateToken,async(req,res)=>{
+  const {user} =req.user;
+  if(!user){
+    return res.json({
+      error:true,
+      message:"user not found"
+    })
+  }
+  try{
+    const food=await CalorieIntake.find({user:user._id});
+    if(!food){  
+      return res.json({
+        error:true,
+        message:"exercises not found"
+      })
+    }
+    return res.status(200).json({
+      error:true,
+      food,
+      message:"food items returned successfully"
+
+    })
+  }
+  catch(error){
+    return res.json({
+      error:true,
+      message:"Internal error occured"
+    })
+  }
+})
 
 //update user profile
 app.put("/update-user", authenticateToken, async (req, res) => {
