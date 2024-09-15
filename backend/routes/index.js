@@ -256,6 +256,62 @@ app.post("/addCalorieIntake", authenticateToken, async (req, res) => {
     });
   }
 });
+app.put("/update-user", authenticateToken, async (req, res) => {
+  const {user} = req.user;
+  const { fullname, profile } = req.body;
+
+  if (!fullname && !profile) {
+    return res.json({
+      error: true,
+      message: "Enter your name and other profiles properly"
+    });
+  }
+
+  try {
+    console.log(user._id);
+    const nUser = await User.findOne({ _id: user._id });
+
+    if (!nUser) {
+      return res.json({
+        error: true,
+        message: "User not found"
+      });
+    }
+    if (fullname) nUser.fullname = fullname;
+    if (profile) nUser.profile = { ...nUser.profile, ...profile };
+
+    await nUser.save();
+
+    return res.status(200).json({
+      error: false,
+      message: "Profile updated successfully"
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: true,
+      message: "Internal error occurred"
+    });
+  }
+});
+
+
+
+//get user
+app.get("/get-user", authenticateToken, async (req, res) => {
+  const { user } = req.user;
+
+  const isUser = await User.findOne({ _id: user._id });
+
+  if (!isUser) {
+    return res.sendStatus(401);
+  }
+
+  return res.json({
+    user: isUser,
+    message: "",
+  });
+});
 app.listen(8000, () => {
   console.log("server is running at port 8000");
 });
