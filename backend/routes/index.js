@@ -141,7 +141,7 @@ app.post("/addExercise", authenticateToken, async (req, res) => {
 });
 //edit exercise updated
 app.put("/editExercise/:exerciseId", authenticateToken, async (req, res) => {
-    const { exerciseId } = req.params.exerciseId;
+    const { exerciseId } = req.params;
     const { user } = req.user;
     const { exercises, date, totalCaloriesBurned } = req.body;
   
