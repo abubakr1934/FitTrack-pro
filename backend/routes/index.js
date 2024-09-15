@@ -172,7 +172,38 @@ app.put("/editExercise/:exerciseId", authenticateToken, async (req, res) => {
       });
     }
   });
+//delete exercise
+app.delete("/deleteExercise/:exerciseId",authenticateToken,async(req,res)=>{
+  const {user}=req.user;
+  const exerciseId=req.params.exerciseId;
 
+  if(!exerciseId){
+    return res.json({
+      error:true,
+      message:"enter the exercise id to delete"
+    })
+  }
+  try{
+    const exc=await Exercise.findOne({user: user._id, _id: exerciseId})
+    if(!exc){
+      return res.json({
+        error:true,
+        message:"no exercise found"
+      })
+    }
+    await Exercise.deleteOne({user: user._id, _id: exerciseId})
+    return res.status(200).json({
+      error:false,
+      message:"exercise deleted successfully"
+    })
+  }
+  catch(error){
+    return res.status(500).json({
+      error: true,
+      message: "Internal Server Error",
+    });
+  }
+})
 app.listen(8000, () => {
   console.log("server is running at port 8000");
 });
