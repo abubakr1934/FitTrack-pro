@@ -256,6 +256,86 @@ app.post("/addCalorieIntake", authenticateToken, async (req, res) => {
     });
   }
 });
+
+// update calorieIntake
+app.put("/updateCalorieIntake/:calorieIntakeId", authenticateToken, async (req, res) => {
+  const { calorieIntakeId } = req.params; 
+  const { user } = req.user; 
+  const { foodItems } = req.body; 
+
+  if (!foodItems || foodItems.length === 0) {
+    return res.status(400).json({
+      error: true,
+      message: "Please add at least one food item to update",
+    });
+  }
+
+  try {
+
+    const calorieIntake = await CalorieIntake.findOne({ _id: calorieIntakeId, user: user._id });
+
+    if (!calorieIntake) {
+      return res.status(404).json({
+        error: true,
+        message: "Calorie intake record not found",
+      });
+    }
+
+
+    calorieIntake.foodItems = foodItems;
+
+
+    await calorieIntake.save();
+
+    return res.status(200).json({
+      error: false,
+      calorieIntake,
+      message: "Calorie intake updated successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: true,
+      message: "An error occurred while updating calorie intake",
+      details: err.message,
+    });
+  }
+});
+
+// delete calorie intake
+app.delete("/deleteCalorieIntake/:calorieIntakeId", authenticateToken, async (req, res) => {
+  const { calorieIntakeId } = req.params; 
+  const { user } = req.user; 
+
+  try {
+
+    const deletedCalorieIntake = await CalorieIntake.findOneAndDelete({
+      _id: calorieIntakeId,
+      user: user._id, 
+    });
+
+    if (!deletedCalorieIntake) {
+      return res.status(404).json({
+        error: true,
+        message: "Calorie intake record not found or you don't have permission to delete this record",
+      });
+    }
+
+
+    return res.status(200).json({
+      error: false,
+      message: "Calorie intake record deleted successfully",
+      deletedCalorieIntake,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: true,
+      message: "An error occurred while deleting the calorie intake record",
+      details: err.message,
+    });
+  }
+});
+
+//update user profile
 app.put("/update-user", authenticateToken, async (req, res) => {
   const {user} = req.user;
   const { fullname, profile } = req.body;
