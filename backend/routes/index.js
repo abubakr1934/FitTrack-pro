@@ -1,22 +1,12 @@
 require("dotenv").config();
 const express = require("express");
-// const { GoogleGenerativeAI } = require("@google/generative-ai");
-// const apiKey = "AIzaSyC9bRubY0YXF3fDkAHjfIbOquoLeTfhf6k"; 
-// const genAI = new GoogleGenerativeAI(apiKey);
-
-const {
-  GoogleGenerativeAI,
-  HarmCategory,
-  HarmBlockThreshold,
-} = require("@google/generative-ai");
-
-const apiKey = "AIzaSyC9bRubY0YXF3fDkAHjfIbOquoLeTfhf6k";
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const apiKey = "AIzaSyC9bRubY0YXF3fDkAHjfIbOquoLeTfhf6k"; 
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
   model: "gemini-1.5-flash",
 });
-
 const generationConfig = {
   temperature: 1,
   topP: 0.95,
@@ -24,17 +14,6 @@ const generationConfig = {
   maxOutputTokens: 8192,
   responseMimeType: "text/plain",
 };
-
-// const model = genAI.getGenerativeModel({
-//   model: "gemini-1.5-flash",
-// });
-// const generationConfig = {
-//   temperature: 1,
-//   topP: 0.95,
-//   topK: 64,
-//   maxOutputTokens: 8192,
-//   responseMimeType: "text/plain",
-// };
 const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
@@ -485,11 +464,11 @@ app.get("/get-user", authenticateToken, async (req, res) => {
 
 //generate personalised diet plan and store it in the respective model
 app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
-  const { user } = req;
+  const { user } = req.user;
   const { weight, goal, height, dietPreference, mealsPerDay, otherDetails } = req.body;
   const userId = user._id;
 
-  // Check for missing fields
+  // Validate required fields
   if (!weight || !goal || !height || !dietPreference || !mealsPerDay || !otherDetails) {
     return res.status(400).json({
       error: true,
@@ -497,80 +476,99 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
     });
   }
 
-  // Create prompt for diet plan generation
+  // Ensure userId is defined
+  if (!userId) {
+    return res.status(400).json({
+      error: true,
+      message: "User ID is missing or undefined",
+    });
+  }
+
+  // Construct the prompt
   const prompt = `
-  Create a diet plan for a person with the following details:
-  - Current weight: ${weight} kg
-  - Height: ${height} cm
-  - Goal: ${goal} (e.g., lose weight, gain muscle, maintain weight)
-  - Diet preference: ${dietPreference} (veg or non-veg)
-  - Meals per day: ${mealsPerDay}
-  ${otherDetails ? `- Other details: ${otherDetails}` : ""}
-  
-  The diet plan should include meal names, food items, and the nutritional value for each meal (fat, protein, carbs, calories).
-  
-  **Important**:
-  - Output **only** valid JSON.
-  - Do **not** include any additional text, warnings, or explanations.
-  - JSON should follow the structure:
+    Create a diet plan for a person with the following details:
+    - Current weight: ${weight} kg
+    - Height: ${height} cm
+    - Goal: ${goal} (e.g., lose weight, gain muscle, maintain weight)
+    - Diet preference: ${dietPreference} (vegetarian or non-vegetarian)
+    - Meals per day: ${mealsPerDay}
+    ${otherDetails ? `- Other details: ${otherDetails}` : ""}
+    
+    The diet plan should include meal names, food items, and the nutritional value for each meal (fat, protein, carbs, calories). Format the response as JSON with the following structure:
     {
       "diet_plan": {
         "meals": [
           {
-            "meal_name": "Meal name",
-            "food_items": ["Item 1", "Item 2", ...],
-            "nutritional_value": {
-              "fat": "value in g",
-              "protein": "value in g",
-              "carbs": "value in g",
-              "calories": value in kcal
+            "mealName": "Meal Name",
+            "foodItems": ["Food Item 1", "Food Item 2"],
+            "nutritionalValue": {
+              "fat": "Fat in grams",
+              "protein": "Protein in grams",
+              "carbs": "Carbs in grams",
+              "calories": Calories in kcal
             }
           }
         ]
       }
     }
-  - The output should be in JSON format or should be parsed into JSON format.
   `;
 
   try {
     const chatSession = model.startChat({
       generationConfig,
-   // safetySettings: Adjust safety settings
-   // See https://ai.google.dev/gemini-api/docs/safety-settings
-      history: [
-        {
-          role: "user",
-          parts: [
-            {text: "const prompt = `\n  Create a diet plan for a person with the following details:\n  - Current weight: ${weight} kg\n  - Height: ${height} cm\n  - Goal: ${goal} (e.g., lose weight, gain muscle, maintain weight)\n  - Diet preference: ${dietPreference} (veg or non-veg)\n  - Meals per day: ${mealsPerDay}\n  ${otherDetails ? `- Other details: ${otherDetails}` : \"\"}\n  \n  The diet plan should include meal names, food items, and the nutritional value for each meal (fat, protein, carbs, calories).\n  \n  **Important**:\n  - Output **only** valid JSON.\n  - Do **not** include any additional text, warnings, or explanations.\n  - JSON should follow the structure:\n    {\n      \"diet_plan\": {\n        \"meals\": [\n          {\n            \"meal_name\": \"Meal name\",\n            \"food_items\": [\"Item 1\", \"Item 2\", ...],\n            \"nutritional_value\": {\n              \"fat\": \"value in g\",\n              \"protein\": \"value in g\",\n              \"carbs\": \"value in g\",\n              \"calories\": value in kcal\n            }\n          }\n        ]\n      }\n    }\n  - Provide me in JSON format.\n  `;\n\nThe output should be in JSON format or should be parsed into JSON format. This is an API Send API Response as JSON data \n"},
-          ],
-        },
-        {
-          role: "model",
-          parts: [
-            {text: "```json\n{\n  \"diet_plan\": {\n    \"meals\": [\n      {\n        \"meal_name\": \"Breakfast\",\n        \"food_items\": [\n          \"2 slices whole wheat toast\",\n          \"1 egg\",\n          \"1/2 cup fruit\",\n          \"1/4 cup low-fat yogurt\"\n        ],\n        \"nutritional_value\": {\n          \"fat\": \"10g\",\n          \"protein\": \"20g\",\n          \"carbs\": \"40g\",\n          \"calories\": \"300kcal\"\n        }\n      },\n      {\n        \"meal_name\": \"Lunch\",\n        \"food_items\": [\n          \"1 cup salad with grilled chicken/tofu\",\n          \"1/2 cup brown rice\",\n          \"1/4 cup mixed vegetables\"\n        ],\n        \"nutritional_value\": {\n          \"fat\": \"15g\",\n          \"protein\": \"30g\",\n          \"carbs\": \"50g\",\n          \"calories\": \"400kcal\"\n        }\n      },\n      {\n        \"meal_name\": \"Dinner\",\n        \"food_items\": [\n          \"4 oz baked salmon/chicken breast\",\n          \"1/2 cup quinoa\",\n          \"1 cup steamed vegetables\"\n        ],\n        \"nutritional_value\": {\n          \"fat\": \"20g\",\n          \"protein\": \"40g\",\n          \"carbs\": \"60g\",\n          \"calories\": \"500kcal\"\n        }\n      },\n      {\n        \"meal_name\": \"Snack\",\n        \"food_items\": [\n          \"1/4 cup trail mix\",\n          \"1 small apple\"\n        ],\n        \"nutritional_value\": {\n          \"fat\": \"5g\",\n          \"protein\": \"10g\",\n          \"carbs\": \"20g\",\n          \"calories\": \"150kcal\"\n        }\n      }\n    ]\n  }\n}\n```\n\n**Explanation:**\n\nThis JSON response provides a sample diet plan with four meals (breakfast, lunch, dinner, and a snack). You can adjust the meals, food items, and nutritional values based on the user's specific details (weight, height, goal, diet preference, etc.) and the provided `prompt`.\n\n**Important:**\n\n* This is a **generalized** response. You need to replace the placeholder values with actual data from the `prompt`.\n* You should use a library or algorithm that can calculate nutritional values based on the food items provided.\n* This response does not include any personalized recommendations or adjustments based on the user's specific needs.\n\nTo create a complete and personalized diet plan, you need to:\n\n1. **Parse the input string:** Extract the user's details from the `prompt` using string manipulation techniques or regular expressions.\n2. **Calculate nutritional values:** Use a library or algorithm to determine the nutritional values of each food item.\n3. **Customize the plan:** Generate a diet plan that aligns with the user's goal, diet preference, and other details.\n4. **Format the output:** Structure the data into the specified JSON format.\n\nRemember that generating personalized and accurate diet plans requires specialized knowledge and algorithms. It's recommended to use libraries or APIs designed specifically for this purpose. \n"},
-          ],
-        },
-      ],
+      history: [],
     });
-  
-    const result = await chatSession.sendMessage(prompt)
-    console.log(result.response.text());
 
-    // Assuming `dietPlanNew` is a model, uncomment to save the diet plan to the database
-    // const dietPlanNew = new dietPlan({
-    //   user: userId,
-    //   goal,
-    //   dietPreference,
-    //   mealsPerDay,
-    //   meals: dietPlanResponse.diet_plan.meals,
-    // });
-    // await dietPlanNew.save();
+    const result = await chatSession.sendMessage(prompt);
+    console.log("Raw Response:", result.response.text());
 
-    // Return success response
+    // Extract the JSON part from the response
+    const jsonStart = result.response.text().indexOf('{');
+    const jsonEnd = result.response.text().lastIndexOf('}');
+    const jsonResponse = result.response.text().substring(jsonStart, jsonEnd + 1);
+
+    let dietPlanResponse;
+    try {
+      dietPlanResponse = JSON.parse(jsonResponse);
+    } catch (error) {
+      return res.status(400).json({
+        error: true,
+        message: "Error parsing diet plan response. Response was: " + jsonResponse,
+      });
+    }
+
+    // Validate the structure of the response
+    if (!dietPlanResponse.diet_plan || !dietPlanResponse.diet_plan.meals) {
+      return res.status(400).json({
+        error: true,
+        message: "Invalid diet plan response structure. Response was: " + jsonResponse,
+      });
+    }
+
+    // Clean up the calories field to remove "kcal" and convert to number
+    dietPlanResponse.diet_plan.meals.forEach(meal => {
+      meal.nutritionalValue.calories = parseFloat(meal.nutritionalValue.calories.replace('kcal', '').trim());
+    });
+
+    // Create a new diet plan document
+    const dietPlanNew = new dietPlan({
+      user: userId,
+      goal,
+      dietPreference,
+      mealsPerDay,
+      meals: dietPlanResponse.diet_plan.meals,
+    });
+
+    // Log the diet plan before saving to ensure user field is set
+    console.log("Diet Plan to be saved:", dietPlanNew);
+
+    // Save the diet plan to the database
+    await dietPlanNew.save();
+
     return res.status(200).json({
       error: false,
       message: "Diet plan generated and saved successfully",
-      dietPlanNew: dietPlanResponse.diet_plan, // Returning the generated plan
+      dietPlan: dietPlanNew,
     });
 
   } catch (error) {
@@ -582,7 +580,41 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
   }
 });
 
+//retrieve diet plan
+app.get("/get-diet-plan", authenticateToken, async (req, res) => {
+  const { user } = req.user;
+  const userId = user._id;
 
+  if (!userId) {
+    return res.status(404).json({
+      error: true,
+      message: "User not found",
+    });
+  }
+
+  try {
+    const dietPlanDoc = await dietPlan.findOne({ user: userId });
+    if (!dietPlanDoc) {
+      return res.status(404).json({
+        error: true,
+        message: "No diet plan initialized",
+      });
+    }
+
+    await dietPlanDoc.deleteOne();
+    return res.status(200).json({
+      error: false,
+      message: "Plan deleted successfully",
+    });
+  } catch (error) {
+    console.error("Internal Server Error:", error);
+    return res.status(500).json({
+      error: true,
+      message: "Internal error occurred",
+      error: error.message,
+    });
+  }
+});
 app.listen(8000, () => {
   console.log("server is running at port 8000");
 });
