@@ -1,40 +1,61 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const dietPlan = new mongoose.Schema({
+const dietPlanSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User", 
     required: true,
   },
-  planName: {
+  goal: {
     type: String,
+    enum: ["lose weight", "gain weight", "maintain weight"],
+    required: true,
+  },
+  dietPreference: {
+    type: String,
+    enum: ["vegetarian", "non-vegetarian"],
+    required: true,
+  },
+  mealsPerDay: {
+    type: Number,
     required: true,
   },
   meals: [
     {
-      mealType: {
-        type: String, 
+      mealName: {
+        type: String,
         required: true,
       },
-      items: [
+      foodItems: [
         {
-          foodName: String,
-          calories: Number,
-          protein: Number,
-          carbs: Number,
-          fat: Number,
+          type: String,
+          required: true,
         },
       ],
+      nutritionalValue: {
+        fat: {
+          type: String, // Storing as a string (e.g., "15g")
+          required: true,
+        },
+        protein: {
+          type: String,
+          required: true,
+        },
+        carbs: {
+          type: String,
+          required: true,
+        },
+        calories: {
+          type: Number,
+          required: true,
+        },
+      },
     },
   ],
-  totalCalories: {
-    type: Number,
-    required: true,
-  },
-  dateCreated: {
+  createdAt: {
     type: Date,
     default: Date.now,
   },
 });
 
-module.exports = mongoose.model('dietPlan', dietPlan);
+module.exports = mongoose.model("DietPlan", dietPlanSchema);
