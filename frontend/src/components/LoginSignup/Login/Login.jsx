@@ -11,7 +11,32 @@ const Login = () => {
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
+  
+  const handleGoogleLogin = () => {
+    console.log("Google login triggered");
+    setSuccess("Google login successful!");
+    setError("");  
+  };
 
+  
+  const handleFacebookLogin = () => {
+    console.log("Facebook login triggered");
+    setSuccess("Facebook login successful!");
+    setError("");  
+  };
+
+  
+  const handleLogin = (e) => {
+    e.preventDefault(); 
+    if (email === "test@example.com" && password === "password123") {
+      setSuccess("Login successful!");
+      setError("");  
+      navigate("/");  
+    } else {
+      setError("Invalid email or password");
+      setSuccess("");
+    }
+  };
 
   return (
     <div className="bg-image">

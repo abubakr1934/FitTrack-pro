@@ -12,7 +12,30 @@ const SignUp = () => {
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
+  const signInWithGoogle = () => {
+    console.log("Google Sign-In");
+    navigate("/");
+  };
 
+  const signInWithFacebook = () => {
+    console.log("Facebook Sign-In");
+    navigate("/");
+  };
+
+  const signIn = (e) => {
+    e.preventDefault();
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    console.log("Email Sign-Up:", { email, password });
+
+    setSuccess("Sign-Up successful!");
+    setError("");
+    navigate("/");
+  };
 
   return (
     <div className="bg-image">
@@ -62,8 +85,16 @@ const SignUp = () => {
                 required
               />
             </div>
-            {error && <div className="text-red-500 mb-4 text-lg text-center">{error}</div>}
-            {success && <div className="text-green-500 mb-4 text-lg text-center">{success}</div>}
+            {error && (
+              <div className="text-red-500 mb-4 text-lg text-center">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="text-green-500 mb-4 text-lg text-center">
+                {success}
+              </div>
+            )}
             <div className="flex flex-row justify-center gap-4">
               <button
                 type="submit"

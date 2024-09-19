@@ -3,7 +3,7 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import SignUp from './components/LoginSignup/Signup/Signup'
-import {Routes,Route,BrowserRouter as Router} from 'react-router-dom'
+import { Routes, Route, BrowserRouter as Router } from 'react-router-dom'
 import Login from './components/LoginSignup/Login/Login'
 import { Home } from './components/Home/Home'
 import { Features } from './components/Features/Features'
@@ -13,17 +13,16 @@ import Dashboard from './components/Dashboard/Dashboard'
 function App() {
   return (
     <>
-      {/* <Router>
-        
+      <Router>
         <Routes>
-          <Route path='/login' element={<Login/>}></Route>
-          <Route path='/' element={<Home/>}></Route>
-          <Route path='/signup' element={<SignUp/>}></Route>
-          {/* <Route path='/Features' element={<Features/>}></Route>
-          <Route path='/Reviews' element={<Reviews/>}></Route> */}
-        {/* </Routes>
-      </Router> */ }
-      <Dashboard></Dashboard>
+          <Route path='/login' element={<Login />} />
+          <Route path='/' element={<Home />} />
+          <Route path='/signup' element={<SignUp />} />
+          <Route path='/features' element={<Features />} />
+          <Route path='/reviews' element={<Reviews />} />
+        </Routes>
+      </Router>
+      <Dashboard />
     </>
   )
 }
