@@ -66,7 +66,7 @@ app.post("/signup", async (req, res) => {
     const accessToken = jwt.sign({ newUser }, ACCESS_TOKEN_SECRET, {
       expiresIn: "36000m",
     }); //generated access token for the user
-    console.log(newUser);
+    // console.log(newUser);
     return res.status(200).json({
       newUser,
       accessToken,
@@ -104,7 +104,7 @@ app.post("/login", async (req, res) => {
       const accessToken = jwt.sign(userPayload, ACCESS_TOKEN_SECRET, {
         expiresIn: "36000m",
       });
-      console.log(accessToken);
+      // console.log(accessToken);
       return res.json({
         error: false,
         message: "Login Successful",
@@ -194,10 +194,7 @@ app.put("/editExercise/:exerciseId", authenticateToken, async (req, res) => {
 });
 
 //delete exercise
-app.delete(
-  "/deleteExercise/:exerciseId",
-  authenticateToken,
-  async (req, res) => {
+app.delete("/deleteExercise/:exerciseId",authenticateToken,async (req, res) => {
     const { user } = req.user;
     const exerciseId = req.params.exerciseId;
 
@@ -520,7 +517,7 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
     });
 
     const result = await chatSession.sendMessage(prompt);
-    console.log("Raw Response:", result.response.text());
+    // console.log("Raw Response:", result.response.text());
 
     // Extract the JSON part from the response
     const jsonStart = result.response.text().indexOf('{');
@@ -581,7 +578,7 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
 });
 
 //retrieve diet plan
-app.get("/get-diet-plan", authenticateToken, async (req, res) => {
+app.get("/get-diet-plan", authenticateToken, async (req, res) => {  
   const { user } = req.user;
   const userId = user._id;
 
