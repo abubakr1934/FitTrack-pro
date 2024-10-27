@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const apiKey = "AIzaSyC9bRubY0YXF3fDkAHjfIbOquoLeTfhf6k"; 
+const apiKey = "AIzaSyC9bRubY0YXF3fDkAHjfIbOquoLeTfhf6k";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
@@ -14,13 +14,14 @@ const generationConfig = {
   maxOutputTokens: 8192,
   responseMimeType: "text/plain",
 };
+const https = require("https");
 const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 const Exercise = require("../models/calorieBurnt.model");
 const CalorieIntake = require("../models/calorieIntake.model");
-const dietPlan=require("../models/dietPlan.model")
+const dietPlan = require("../models/dietPlan.model");
 const { authenticateToken } = require("../utilities.js");
 const config = require("../configuration/config.json");
 const mongoose = require("mongoose");
@@ -194,7 +195,10 @@ app.put("/editExercise/:exerciseId", authenticateToken, async (req, res) => {
 });
 
 //delete exercise
-app.delete("/deleteExercise/:exerciseId",authenticateToken,async (req, res) => {
+app.delete(
+  "/deleteExercise/:exerciseId",
+  authenticateToken,
+  async (req, res) => {
     const { user } = req.user;
     const exerciseId = req.params.exerciseId;
 
@@ -462,14 +466,23 @@ app.get("/get-user", authenticateToken, async (req, res) => {
 //generate personalised diet plan and store it in the respective model
 app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
   const { user } = req.user;
-  const { weight, goal, height, dietPreference, mealsPerDay, otherDetails } = req.body;
+  const { weight, goal, height, dietPreference, mealsPerDay, otherDetails } =
+    req.body;
   const userId = user._id;
 
   // Validate required fields
-  if (!weight || !goal || !height || !dietPreference || !mealsPerDay || !otherDetails) {
+  if (
+    !weight ||
+    !goal ||
+    !height ||
+    !dietPreference ||
+    !mealsPerDay ||
+    !otherDetails
+  ) {
     return res.status(400).json({
       error: true,
-      message: "Please provide all required fields: weight, goal, height, dietPreference, mealsPerDay, and otherDetails",
+      message:
+        "Please provide all required fields: weight, goal, height, dietPreference, mealsPerDay, and otherDetails",
     });
   }
 
@@ -520,9 +533,11 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
     // console.log("Raw Response:", result.response.text());
 
     // Extract the JSON part from the response
-    const jsonStart = result.response.text().indexOf('{');
-    const jsonEnd = result.response.text().lastIndexOf('}');
-    const jsonResponse = result.response.text().substring(jsonStart, jsonEnd + 1);
+    const jsonStart = result.response.text().indexOf("{");
+    const jsonEnd = result.response.text().lastIndexOf("}");
+    const jsonResponse = result.response
+      .text()
+      .substring(jsonStart, jsonEnd + 1);
 
     let dietPlanResponse;
     try {
@@ -530,7 +545,8 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
     } catch (error) {
       return res.status(400).json({
         error: true,
-        message: "Error parsing diet plan response. Response was: " + jsonResponse,
+        message:
+          "Error parsing diet plan response. Response was: " + jsonResponse,
       });
     }
 
@@ -538,13 +554,16 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
     if (!dietPlanResponse.diet_plan || !dietPlanResponse.diet_plan.meals) {
       return res.status(400).json({
         error: true,
-        message: "Invalid diet plan response structure. Response was: " + jsonResponse,
+        message:
+          "Invalid diet plan response structure. Response was: " + jsonResponse,
       });
     }
 
     // Clean up the calories field to remove "kcal" and convert to number
-    dietPlanResponse.diet_plan.meals.forEach(meal => {
-      meal.nutritionalValue.calories = parseFloat(meal.nutritionalValue.calories.replace('kcal', '').trim());
+    dietPlanResponse.diet_plan.meals.forEach((meal) => {
+      meal.nutritionalValue.calories = parseFloat(
+        meal.nutritionalValue.calories.replace("kcal", "").trim()
+      );
     });
 
     // Create a new diet plan document
@@ -567,7 +586,6 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
       message: "Diet plan generated and saved successfully",
       dietPlan: dietPlanNew,
     });
-
   } catch (error) {
     console.error("Internal Server Error:", error);
     return res.status(500).json({
@@ -578,7 +596,7 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
 });
 
 //retrieve diet plan
-app.get("/get-diet-plan", authenticateToken, async (req, res) => {  
+app.get("/get-diet-plan", authenticateToken, async (req, res) => {
   const { user } = req.user;
   const userId = user._id;
 
@@ -609,6 +627,62 @@ app.get("/get-diet-plan", authenticateToken, async (req, res) => {
       error: true,
       message: "Internal error occurred",
       error: error.message,
+    });
+  }
+});
+
+//exercise data retrieval from rapid api
+
+
+app.post("/getExerciseDataRapidApi", async (req, res) => {
+  const { exercise } = req.body;
+  if (!exercise) {
+    return res.status(400).json({
+      error: true,
+      message: "Please enter the exercise name",
+    });
+  }
+
+  try {
+    const options = {
+      method: "GET",
+      hostname: "calories-burned-by-api-ninjas.p.rapidapi.com",
+      port: null,
+      path: `/v1/caloriesburned?activity=${encodeURIComponent(exercise)}`,
+      headers: {
+        "x-rapidapi-key": "54e2824a09mshb91e1652b8ff92dp112556jsned82753eaa1e",
+        "x-rapidapi-host": "calories-burned-by-api-ninjas.p.rapidapi.com",
+      },
+    };
+
+    const apiReq = https.request(options, function (apiRes) {
+      const chunks = [];
+
+      apiRes.on("data", function (chunk) {
+        chunks.push(chunk);
+      });
+
+      apiRes.on("end", function () {
+        const body = Buffer.concat(chunks).toString();
+        try {
+          const parsedBody = JSON.parse(body);
+          res.json(parsedBody); // Respond with the data received from RapidAPI
+        } catch (parseError) {
+          res.status(500).json({ error: "Error parsing data from RapidAPI" });
+        }
+      });
+    });
+
+    apiReq.on("error", (e) => {
+      res.status(500).json({ error: "Error fetching data from RapidAPI" });
+    });
+
+    apiReq.end();
+  } catch (error) {
+    return res.status(500).json({
+      error: true,
+      message: "Some internal error occurred",
+      errorMessage: error.message,
     });
   }
 });
