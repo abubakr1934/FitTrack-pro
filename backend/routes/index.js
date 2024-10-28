@@ -126,7 +126,10 @@ app.post("/login", async (req, res) => {
     });
   }
 });
+app.post('/logout', (req, res) => {
 
+  return res.json({ message: 'Logout successful' });
+});
 app.post("/addExercise", authenticateToken, async (req, res) => {
   const { exercises, totalCaloriesBurned } = req.body;
   const { user } = req.user;

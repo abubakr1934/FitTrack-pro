@@ -1,9 +1,9 @@
-import React from 'react';
-import styles from './Features.module.css'; 
-
-export const Features = () => {
+import React from 'react'
+import styles from './Features.module.css'
+const Features = () => {
   return (
-    <section className="min-h-screen bgg text-center py-20 px-8 xl:px-0 flex flex-col justify-center">
+    <div>
+      <section className="min-h-screen bgg text-center py-20 px-8 xl:px-0 flex flex-col justify-center">
       <span className="text-black text-lg max-w-lg mx-auto mb-2 capitalize flex items-center">
         what we're offering
         <svg
@@ -71,5 +71,8 @@ export const Features = () => {
         </div>
       </div>
     </section>
-  );
-};
+    </div>
+  )
+}
+
+export default Features

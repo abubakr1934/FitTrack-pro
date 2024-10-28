@@ -40,17 +40,7 @@ const SignUp = () => {
       <div className="min-h-screen flex flex-row align-middle items-center justify-center bg-gray-100 bg-image gap-4">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
           <h2 className="text-2xl font-bold mb-6 text-gray-800">Sign Up</h2>
-          <div className="flex justify-center mb-2">
-            <div className="icon-circle" onClick={signInWithGoogle}>
-              <SiGmail size={30} />
-            </div>
-            <div className="icon-circle" onClick={signInWithFacebook}>
-              <FaFacebook size={30} />
-            </div>
-          </div>
-          <div className="flex flex-row justify-center">
-            <p>or with:</p>
-          </div>
+          
           <form onSubmit={handleSignUp}>
             <div className="mb-4">
               <label className="block text-gray-700">Email</label>

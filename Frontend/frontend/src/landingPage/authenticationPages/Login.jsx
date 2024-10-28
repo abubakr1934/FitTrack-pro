@@ -25,7 +25,7 @@ const Login = () => {
         // Store the access token in local storage or context
         localStorage.setItem("accessToken", response.data.accessToken);
         // Redirect to the main application page
-        navigate("/main");
+        navigate("/dashboard");
       }
     } catch (error) {
       setError("An error occurred during login");
@@ -37,17 +37,8 @@ const Login = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-100 bg-image">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
           <h2 className="text-2xl font-bold mb-6 text-gray-800">Login</h2>
-          <div className="flex justify-center mb-2">
-            <div className="icon-circle" onClick={handleGoogleLogin}>
-              <SiGmail size={30} />
-            </div>
-            <div className="icon-circle" onClick={handleFacebookLogin}>
-              <FaFacebook size={30} />
-            </div>
-          </div>
-          <div className="flex flex-row justify-center mb-4">
-            <p>or with:</p>
-          </div>
+          
+        
           <form onSubmit={handleLogin}>
             <div className="mb-4">
               <label className="block text-gray-700">Email</label>
