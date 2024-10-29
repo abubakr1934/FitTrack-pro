@@ -5,18 +5,20 @@ import Logo from '../Logo/Logo';
 
 export const Navbar1 = () => {
   return (
-    <nav className="fixed top-0 left-0 w-full bg-gray-900 shadow-lg z-50 py-4 transition duration-300 ease-in-out">
-      <div className="flex items-center justify-between px-6 max-w-7xl mx-auto">
+    <nav className="fixed top-0 left-0 w-full bg-gray-800 shadow-lg z-50 py-4 transition duration-300 ease-in-out">
+      <div className="flex items-center justify-between px-6 mx-auto">
         
         
-        <Link to="/" className="flex items-center transition-transform transform hover:scale-105 duration-300 ease-in-out">
+        <div>
+        <Link to="/" className="">
           <div className="w-12 h-12"> 
-            <Logo size={12} />
+            <Logo />
           </div>
         </Link>
 
+        </div>
         
-        <div className="flex-grow flex justify-center space-x-8">
+        <div className="flex-grow flex justify-center ">
           <NavLink
             to="/"
             className={({ isActive }) => 
@@ -26,24 +28,7 @@ export const Navbar1 = () => {
           >
             Home
           </NavLink>
-          <NavLink
-            to="/features"
-            className={({ isActive }) => 
-              `text-white uppercase text-lg font-medium hover:text-blue-400 transition duration-300 ${isActive ? 'border-b-2 border-blue-400' : ''}`
-            }
-            aria-label="Features"
-          >
-            Features
-          </NavLink>
-          <NavLink
-            to="/reviews"
-            className={({ isActive }) => 
-              `text-white uppercase text-lg font-medium hover:text-blue-400 transition duration-300 ${isActive ? 'border-b-2 border-blue-400' : ''}`
-            }
-            aria-label="Reviews"
-          >
-            Reviews
-          </NavLink>
+          
         </div>
 
  

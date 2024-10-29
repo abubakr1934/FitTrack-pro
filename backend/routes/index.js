@@ -352,33 +352,73 @@ app.delete(
 );
 //all exercises
 app.get("/getAllExercises", authenticateToken, async (req, res) => {
-  const { user } = req.user;
+  const user = req.user;
+  const { timeFrame } = req.query;
+
+  console.log('Incoming request for getAllExercises');
+  console.log('Request user:', user);
+  console.log('Requested timeFrame:', timeFrame);
+
   if (!user) {
     return res.json({
       error: true,
       message: "user not found",
     });
   }
+
   try {
-    const excs = await Exercise.find({ user: user._id });
-    if (!excs) {
+    let startDate, endDate;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Start of the current day
+
+    switch (timeFrame) {
+      case 'today':
+        startDate = now;
+        endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // End of the current day
+        break;
+      case 'yesterday':
+        endDate = now;
+        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000); // Start of the previous day
+        break;
+      case 'past5days':
+        endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // End of the current day
+        startDate = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // Start of 5 days ago
+        break;
+      default:
+        startDate = new Date(0); // Start of Unix epoch
+        endDate = new Date(); // Current date and time
+    }
+
+    console.log('Date range:', { startDate, endDate });
+
+    const exercises = await Exercise.find({
+      user: user._id,
+      date: { $gte: startDate, $lt: endDate },
+    });
+
+    console.log('Found exercises:', exercises);
+
+    if (!exercises || exercises.length === 0) {
       return res.json({
         error: true,
-        message: "exercises not found",
+        message: "No exercises found for the specified timeframe.",
       });
     }
+
     return res.status(200).json({
-      error: true,
-      excs,
-      message: "exercises returned successfully",
+      error: false,
+      exercises,
+      message: "Exercises returned successfully",
     });
   } catch (error) {
-    return res.json({
+    console.error('Error in getAllExercises:', error);
+    return res.status(500).json({
       error: true,
-      message: "Internal error occured",
+      message: "Internal error occurred",
     });
   }
 });
+
 
 //all food items
 app.get("/getAllFoodItems", authenticateToken, async (req, res) => {
