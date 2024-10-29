@@ -1,54 +1,60 @@
-import React from 'react';
 
+import React from 'react';
+import { Link, NavLink } from 'react-router-dom';
 import Logo from '../Logo/Logo';
 
 export const Navbar1 = () => {
   return (
-    <nav className="p-4 bg-transparent shadow-md">
-      <div className="container mx-auto flex items-center">
-        {/* Logo Section */}
-        <div className="flex items-center  flex-shrink-0">
-          <a href="/" className="transition-transform transform hover:scale-105 duration-300 ease-in-out">
-            <div className="w-20 h-10 mt-10 flex items-center justify-center">
-              <Logo size={10} />
-            </div>
-          </a>
-          <a href="/" className="text-white font-bold text-xl uppercase transition-colors duration-300 ease-in-out hover:text-gray-400">
-            {/* Brand Name Here */}
-          </a>
-        </div>
+    <nav className="fixed top-0 left-0 w-full bg-gray-900 shadow-lg z-50 py-4 transition duration-300 ease-in-out">
+      <div className="flex items-center justify-between px-6 max-w-7xl mx-auto">
         
-        {/* Centered Navigation as */}
+        
+        <Link to="/" className="flex items-center transition-transform transform hover:scale-105 duration-300 ease-in-out">
+          <div className="w-12 h-12"> 
+            <Logo size={12} />
+          </div>
+        </Link>
+
+        
         <div className="flex-grow flex justify-center space-x-8">
-          <a
-            href="/"
-            className="text-black uppercase text-base hover:bg-gray-100 px-4 py-2 rounded-md font-medium transition-colors duration-300 ease-in-out"
+          <NavLink
+            to="/"
+            className={({ isActive }) => 
+              `text-white uppercase text-lg font-medium hover:text-blue-400 transition duration-300 ${isActive ? 'border-b-2 border-blue-400' : ''}`
+            }
+            aria-label="Home"
           >
             Home
-          </a>
-          <a
-            href="/features"
-            className="text-black uppercase text-base hover:bg-gray-100 px-4 py-2 rounded-md font-medium transition-colors duration-300 ease-in-out"
+          </NavLink>
+          <NavLink
+            to="/features"
+            className={({ isActive }) => 
+              `text-white uppercase text-lg font-medium hover:text-blue-400 transition duration-300 ${isActive ? 'border-b-2 border-blue-400' : ''}`
+            }
+            aria-label="Features"
           >
             Features
-          </a>
-          <a
-            href="/reviews"
-            className="text-black uppercase text-base hover:bg-gray-100 px-4 py-2 rounded-md font-medium transition-colors duration-300 ease-in-out"
+          </NavLink>
+          <NavLink
+            to="/reviews"
+            className={({ isActive }) => 
+              `text-white uppercase text-lg font-medium hover:text-blue-400 transition duration-300 ${isActive ? 'border-b-2 border-blue-400' : ''}`
+            }
+            aria-label="Reviews"
           >
             Reviews
-          </a>
+          </NavLink>
         </div>
 
-        {/* Right-aligned as */}
-        <div className="flex items-center space-x-4 flex-shrink-0">
-          
-          <a 
-            href=""
-            className="bg-white text-black uppercase text-base hover:bg-gray-100 px-4 py-2 rounded-md font-medium transition-colors duration-300 ease-in-out"
+ 
+        <div className="flex items-center">
+          <Link 
+            to="/logout"
+            className="bg-blue-500 text-white uppercase text-lg font-medium px-6 py-2 rounded-md shadow-md hover:bg-blue-600 transition duration-300"
+            aria-label="Logout"
           >
             Logout
-          </a>
+          </Link>
         </div>
       </div>
     </nav>
