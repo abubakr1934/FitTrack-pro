@@ -131,21 +131,21 @@ app.post('/logout', (req, res) => {
   return res.json({ message: 'Logout successful' });
 });
 app.post("/addExercise", authenticateToken, async (req, res) => {
-  const { exercises, totalCaloriesBurned } = req.body;
+  const { exerciseName, muscleGroup, duration, caloriesBurned } = req.body;
   const { user } = req.user;
 
-  if (!exercises) {
+  if (!exerciseName || !muscleGroup || !duration || !caloriesBurned) {
     return res.json({
       error: true,
-      message: "Add exercise before pressing enter",
+      message: "All fields are required",
     });
   }
 
   try {
     const newExercise = new Exercise({
       user: user._id,
-      exercises: exercises,
-      totalCaloriesBurned: totalCaloriesBurned,
+      exercises: [{ exerciseName, muscleGroup, duration, caloriesBurned }],
+      totalCaloriesBurned: caloriesBurned,
     });
 
     await newExercise.save();
@@ -163,11 +163,11 @@ app.post("/addExercise", authenticateToken, async (req, res) => {
   }
 });
 
-//edit exercise updated
+// Edit exercise
 app.put("/editExercise/:exerciseId", authenticateToken, async (req, res) => {
   const { exerciseId } = req.params;
   const { user } = req.user;
-  const { exercises, date, totalCaloriesBurned } = req.body;
+  const { exerciseName, muscleGroup, duration, caloriesBurned } = req.body;
 
   try {
     const exc = await Exercise.findOne({ user: user._id, _id: exerciseId });
@@ -178,9 +178,13 @@ app.put("/editExercise/:exerciseId", authenticateToken, async (req, res) => {
         message: "No exercise found",
       });
     }
-    if (exercises) exc.exercises = exercises;
-    if (date) exc.date = date;
-    if (totalCaloriesBurned) exc.totalCaloriesBurned = totalCaloriesBurned;
+
+    if (exerciseName) exc.exercises[0].exerciseName = exerciseName;
+    if (muscleGroup) exc.exercises[0].muscleGroup = muscleGroup;
+    if (duration) exc.exercises[0].duration = duration;
+    if (caloriesBurned) exc.exercises[0].caloriesBurned = caloriesBurned;
+    exc.totalCaloriesBurned = caloriesBurned;
+
     await exc.save();
 
     return res.json({
@@ -197,41 +201,67 @@ app.put("/editExercise/:exerciseId", authenticateToken, async (req, res) => {
   }
 });
 
-//delete exercise
-app.delete(
-  "/deleteExercise/:exerciseId",
-  authenticateToken,
-  async (req, res) => {
-    const { user } = req.user;
-    const exerciseId = req.params.exerciseId;
+// Delete exercise
+app.delete("/deleteExercise/:exerciseId", authenticateToken, async (req, res) => {
+  const { user } = req.user;
+  const exerciseId = req.params.exerciseId;
 
-    if (!exerciseId) {
+  if (!exerciseId) {
+    return res.json({
+      error: true,
+      message: "Enter the exercise id to delete",
+    });
+  }
+
+  try {
+    const exc = await Exercise.findOne({ user: user._id, _id: exerciseId });
+    if (!exc) {
       return res.json({
         error: true,
-        message: "enter the exercise id to delete",
+        message: "No exercise found",
       });
     }
-    try {
-      const exc = await Exercise.findOne({ user: user._id, _id: exerciseId });
-      if (!exc) {
-        return res.json({
-          error: true,
-          message: "no exercise found",
-        });
-      }
-      await Exercise.deleteOne({ user: user._id, _id: exerciseId });
-      return res.status(200).json({
-        error: false,
-        message: "exercise deleted successfully",
-      });
-    } catch (error) {
-      return res.status(500).json({
-        error: true,
-        message: "Internal Server Error",
-      });
-    }
+
+    await Exercise.deleteOne({ user: user._id, _id: exerciseId });
+    return res.status(200).json({
+      error: false,
+      message: "Exercise deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: true,
+      message: "Internal Server Error",
+    });
   }
-);
+});
+
+// Get exercises for today
+app.get('/getExercisesForToday', authenticateToken, async (req, res) => {
+  const { user } = req.user;
+  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+
+  try {
+    const exercises = await Exercise.find({
+      user: user._id,
+      date: {
+        $gte: new Date(today), // Greater than or equal to today's date at 00:00:00
+        $lte: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000) // Less than tomorrow's date at 00:00:00
+      }
+    });
+
+    return res.status(200).json({
+      error: false,
+      exercises,
+      message: 'Exercises for today retrieved successfully',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: true,
+      message: 'An error occurred while retrieving exercises for today',
+      details: error.message,
+    });
+  }
+});
 
 //add food api
 app.post("/addCalorieIntake", authenticateToken, async (req, res) => {
@@ -350,9 +380,49 @@ app.delete(
     }
   }
 );
+app.get("/getAll", authenticateToken, async (req, res) => {
+  const {user} = req.user;
+
+  console.log('Incoming request for getAllExercises');
+  console.log('Request user:', user);
+
+  if (!user) {
+    return res.json({
+      error: true,
+      message: "User not found",
+    });
+  }
+
+  try {
+    // Fetch all exercises for the user without any date filtering
+    const exercises = await Exercise.find({ user: user._id });
+
+    console.log('Found exercises:', exercises);
+
+    if (!exercises || exercises.length === 0) {
+      return res.json({
+        error: true,
+        message: "No exercises found.",
+      });
+    }
+
+    return res.status(200).json({
+      error: false,
+      exercises,
+      message: "Exercises returned successfully",
+    });
+  } catch (error) {
+    console.error('Error in getAllExercises:', error);
+    return res.status(500).json({
+      error: true,
+      message: "Internal error occurred",
+    });
+  }
+});
+
 //all exercises
 app.get("/getAllExercises", authenticateToken, async (req, res) => {
-  const user = req.user;
+  const {user} = req.user;
   const { timeFrame } = req.query;
 
   console.log('Incoming request for getAllExercises');
@@ -362,27 +432,36 @@ app.get("/getAllExercises", authenticateToken, async (req, res) => {
   if (!user) {
     return res.json({
       error: true,
-      message: "user not found",
+      message: "User not found",
     });
   }
 
   try {
     let startDate, endDate;
     const now = new Date();
-    now.setHours(0, 0, 0, 0); // Start of the current day
 
     switch (timeFrame) {
       case 'today':
-        startDate = now;
-        endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // End of the current day
+        console.log('today')
+        startDate = new Date(now);
+        startDate.setHours(0, 0, 0, 0); // Start of the current day
+        endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999); // End of the current day
         break;
       case 'yesterday':
-        endDate = now;
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000); // Start of the previous day
+        console.log('yesterday')
+        endDate = new Date(now);
+        endDate.setHours(0, 0, 0, 0); // Start of today
+        startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 1); // Start of yesterday
         break;
       case 'past5days':
-        endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // End of the current day
-        startDate = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // Start of 5 days ago
+        console.log('5 din pehle')
+        endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999); // End of the current day
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 5); // Start of 5 days ago
+        startDate.setHours(0, 0, 0, 0); // Start of that day
         break;
       default:
         startDate = new Date(0); // Start of Unix epoch
@@ -393,7 +472,7 @@ app.get("/getAllExercises", authenticateToken, async (req, res) => {
 
     const exercises = await Exercise.find({
       user: user._id,
-      date: { $gte: startDate, $lt: endDate },
+      date: { $gte: startDate, $lte: endDate },
     });
 
     console.log('Found exercises:', exercises);
@@ -418,6 +497,7 @@ app.get("/getAllExercises", authenticateToken, async (req, res) => {
     });
   }
 });
+
 
 
 //all food items
