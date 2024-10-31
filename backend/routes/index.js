@@ -264,20 +264,29 @@ app.get('/getExercisesForToday', authenticateToken, async (req, res) => {
 });
 
 //add food api
+
+// Add Calorie Intake
 app.post("/addCalorieIntake", authenticateToken, async (req, res) => {
-  const { foodItems } = req.body;
+  const { foodName, quantity, fat, protein, carbs, calories } = req.body;
   const { user } = req.user;
-  if (!foodItems || foodItems.length === 0) {
+
+  // Validate required fields
+  if (!foodName || !quantity || !fat || !protein || !carbs || !calories) {
     return res.status(400).json({
       error: true,
-      message: "Please add at least one food item",
+      message: "Please provide all required fields: foodName, quantity, fat, protein, carbs, and calories",
     });
   }
 
   try {
     const newCalorieIntake = new CalorieIntake({
       user: user._id,
-      foodItems: foodItems,
+      foodName,
+      quantity,
+      fat,
+      protein,
+      carbs,
+      calories,
     });
 
     await newCalorieIntake.save();
@@ -296,55 +305,53 @@ app.post("/addCalorieIntake", authenticateToken, async (req, res) => {
   }
 });
 
-// update calorieIntake
+// Update Calorie Intake
 app.put(
   "/updateCalorieIntake/:calorieIntakeId",
   authenticateToken,
   async (req, res) => {
     const { calorieIntakeId } = req.params;
     const { user } = req.user;
-    const { foodItems } = req.body;
+    const { foodName, quantity, fat, protein, carbs, calories } = req.body;
 
-    if (!foodItems || foodItems.length === 0) {
+    // Validate required fields
+    if (!foodName || !quantity || !fat || !protein || !carbs || !calories) {
       return res.status(400).json({
         error: true,
-        message: "Please add at least one food item to update",
+        message: "Please provide all required fields: foodName, quantity, fat, protein, carbs, and calories",
       });
     }
 
     try {
-      const calorieIntake = await CalorieIntake.findOne({
-        _id: calorieIntakeId,
-        user: user._id,
-      });
+      const updatedCalorieIntake = await CalorieIntake.findOneAndUpdate(
+        { _id: calorieIntakeId, user: user._id },
+        { foodName, quantity, fat, protein, carbs, calories },
+        { new: true } // Return the updated document
+      );
 
-      if (!calorieIntake) {
+      if (!updatedCalorieIntake) {
         return res.status(404).json({
           error: true,
-          message: "Calorie intake record not found",
+          message: "Calorie intake record not found or you don't have permission to update this record",
         });
       }
 
-      calorieIntake.foodItems = foodItems;
-
-      await calorieIntake.save();
-
       return res.status(200).json({
         error: false,
-        calorieIntake,
+        updatedCalorieIntake,
         message: "Calorie intake updated successfully",
       });
     } catch (err) {
       return res.status(500).json({
         error: true,
-        message: "An error occurred while updating calorie intake",
+        message: "An error occurred while updating the calorie intake record",
         details: err.message,
       });
     }
   }
 );
 
-// delete calorie intake
+// Delete Calorie Intake
 app.delete(
   "/deleteCalorieIntake/:calorieIntakeId",
   authenticateToken,
@@ -361,8 +368,7 @@ app.delete(
       if (!deletedCalorieIntake) {
         return res.status(404).json({
           error: true,
-          message:
-            "Calorie intake record not found or you don't have permission to delete this record",
+          message: "Calorie intake record not found or you don't have permission to delete this record",
         });
       }
 
@@ -380,6 +386,84 @@ app.delete(
     }
   }
 );
+
+app.get('/getFoodEntriesForToday', authenticateToken, async (req, res) => {
+  const { user } = req.user;
+  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+
+  try {
+    const foodEntries = await CalorieIntake.find({
+      user: user._id,
+      date: {
+        $gte: new Date(today), // Greater than or equal to today's date at 00:00:00
+        $lt: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000) // Less than tomorrow's date at 00:00:00
+      }
+    });
+
+    return res.status(200).json({
+      error: false,
+      foodEntries,
+      message: 'Food entries for today retrieved successfully',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: true,
+      message: 'An error occurred while retrieving food entries for today',
+      details: error.message,
+    });
+  }
+});
+app.get('/getAllFoodEntries', authenticateToken, async (req, res) => {
+  const { user } = req.user;
+  const { timeFrame } = req.query;
+
+  let startDate, endDate;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Start of today
+
+  switch (timeFrame) {
+    case 'today':
+      startDate = new Date(today);
+      endDate = new Date(today.getTime() + 24 * 60 * 60 * 1000); // End of today
+      break;
+    case 'yesterday':
+      startDate = new Date(today.getTime() - 24 * 60 * 60 * 1000); // Start of yesterday
+      endDate = new Date(today); // End of yesterday
+      break;
+    case 'past5days':
+      startDate = new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000); // Start of 5 days ago
+      endDate = new Date(today.getTime() + 24 * 60 * 60 * 1000); // End of today
+      break;
+    default:
+      return res.status(400).json({
+        error: true,
+        message: 'Invalid time frame',
+      });
+  }
+
+  try {
+    const foodEntries = await CalorieIntake.find({
+      user: user._id,
+      date: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+    });
+
+    return res.status(200).json({
+      error: false,
+      foodEntries,
+      message: 'Food entries retrieved successfully',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: true,
+      message: 'An error occurred while retrieving food entries',
+      details: error.message,
+    });
+  }
+});
 app.get("/getAll", authenticateToken, async (req, res) => {
   const {user} = req.user;
 
@@ -719,7 +803,46 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
 });
 
 //retrieve diet plan
+
 app.get("/get-diet-plan", authenticateToken, async (req, res) => {
+  const { user } = req.user;
+  const userId = user._id;
+
+  if (!userId) {
+    return res.status(404).json({
+      error: true,
+      message: "User not found",
+    });
+  }
+
+  try {
+    const dietPlanDoc = await dietPlan.findOne({ user: userId });
+    if (!dietPlanDoc) {
+      return res.status(404).json({
+        error: true,
+        message: "No diet plan initialized",
+      });
+    }
+
+    return res.status(200).json({
+      error: false,
+      message: "Diet plan retrieved successfully",
+      dietPlan: dietPlanDoc,
+    });
+  } catch (error) {
+    console.error("Internal Server Error:", error);
+    return res.status(500).json({
+      error: true,
+      message: "Internal error occurred",
+      error: error.message,
+    });
+  }
+});
+
+//exercise data retrieval from rapid api
+
+// Delete diet plan
+app.delete("/delete-diet-plan", authenticateToken, async (req, res) => {
   const { user } = req.user;
   const userId = user._id;
 
@@ -753,10 +876,6 @@ app.get("/get-diet-plan", authenticateToken, async (req, res) => {
     });
   }
 });
-
-//exercise data retrieval from rapid api
-
-
 app.post("/getExerciseDataRapidApi", async (req, res) => {
   const { exercise } = req.body;
   if (!exercise) {

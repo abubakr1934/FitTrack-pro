@@ -10,34 +10,30 @@ const calorieIntake = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  foodItems: [
-    {
-      foodName: {
-        type: String,
-        required: true,
-      },
-      quantity: {
-        type: Number, 
-        required: true,
-      },
-      fat: {
-        type: Number,
-        required: true,
-      },
-      protein: {
-        type: Number,
-        required: true,
-      },
-      carbs: {
-        type: Number,
-        required: true,
-      },
-      calories: {
-        type: Number,
-        required: true,
-      },
-    },
-  ],
+  foodName: {
+    type: String,
+    required: true,
+  },
+  quantity: {
+    type: Number, 
+    required: true,
+  },
+  fat: {
+    type: Number,
+    required: true,
+  },
+  protein: {
+    type: Number,
+    required: true,
+  },
+  carbs: {
+    type: Number,
+    required: true,
+  },
+  calories: {
+    type: Number,
+    required: true,
+  },
 });
 
 module.exports = mongoose.model('calorieIntake', calorieIntake);
