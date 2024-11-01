@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import Modal from './Modal';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import Modal from "./Modal";
 
 const ExerciseForm = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [exercises, setExercises] = useState([]);
   const [formData, setFormData] = useState({
-    exerciseName: '',
-    muscleGroup: '',
-    duration: '',
-    caloriesBurned: '',
+    exerciseName: "",
+    muscleGroup: "",
+    duration: "",
+    caloriesBurned: "",
   });
   const [editingExercise, setEditingExercise] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -21,15 +21,18 @@ const ExerciseForm = () => {
     setError(null);
 
     try {
-      const response = await axios.get('http://localhost:8000/getExercisesForToday', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-      });
+      const response = await axios.get(
+        "http://localhost:8000/getExercisesForToday",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
 
       setExercises(response.data.exercises);
     } catch (error) {
-      setError('Failed to fetch exercises for today.');
+      setError("Failed to fetch exercises for today.");
     } finally {
       setLoading(false);
     }
@@ -51,19 +54,19 @@ const ExerciseForm = () => {
     setError(null);
 
     try {
-      await axios.post('http://localhost:8000/addExercise', formData, {
+      await axios.post("http://localhost:8000/addExercise", formData, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
-      
+
       // Refetch exercises after successful addition
       fetchExercisesForToday();
-      
+
       // Reset form data and close modal
       closeModal();
     } catch (error) {
-      setError('Failed to add exercise.');
+      setError("Failed to add exercise.");
     } finally {
       setLoading(false);
     }
@@ -74,19 +77,23 @@ const ExerciseForm = () => {
     setError(null);
 
     try {
-      await axios.put(`http://localhost:8000/editExercise/${editingExercise._id}`, formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-      });
-      
+      await axios.put(
+        `http://localhost:8000/editExercise/${editingExercise._id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+
       // Refetch exercises after successful edit
       fetchExercisesForToday();
-      
+
       // Reset form data and close modal
       closeModal();
     } catch (error) {
-      setError('Failed to edit exercise.');
+      setError("Failed to edit exercise.");
     } finally {
       setLoading(false);
     }
@@ -99,14 +106,14 @@ const ExerciseForm = () => {
     try {
       await axios.delete(`http://localhost:8000/deleteExercise/${exerciseId}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
 
       // Refetch exercises after successful deletion
       fetchExercisesForToday();
     } catch (error) {
-      setError('Failed to delete exercise.');
+      setError("Failed to delete exercise.");
     } finally {
       setLoading(false);
     }
@@ -124,10 +131,10 @@ const ExerciseForm = () => {
     } else {
       setEditingExercise(null);
       setFormData({
-        exerciseName: '',
-        muscleGroup: '',
-        duration: '',
-        caloriesBurned: '',
+        exerciseName: "",
+        muscleGroup: "",
+        duration: "",
+        caloriesBurned: "",
       });
     }
     setIsModalOpen(true);
@@ -137,23 +144,16 @@ const ExerciseForm = () => {
     setIsModalOpen(false);
     setEditingExercise(null);
     setFormData({
-      exerciseName: '',
-      muscleGroup: '',
-      duration: '',
-      caloriesBurned: '',
+      exerciseName: "",
+      muscleGroup: "",
+      duration: "",
+      caloriesBurned: "",
     });
   };
 
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Add/Edit Exercise</h2>
-
-      <button
-        onClick={() => openModal()}
-        className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
-      >
-        Add Exercise
-      </button>
 
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
@@ -182,20 +182,28 @@ const ExerciseForm = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {exercises.map((exercise) => (
               <tr key={exercise._id}>
-                <td className="px-6 py-4 whitespace-nowrap">{exercise.exercises[0].exerciseName}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{exercise.exercises[0].muscleGroup}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{exercise.exercises[0].duration}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{exercise.exercises[0].caloriesBurned}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {exercise.exercises[0].exerciseName}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {exercise.exercises[0].muscleGroup}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {exercise.exercises[0].duration}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {exercise.exercises[0].caloriesBurned}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
                     onClick={() => openModal(exercise)}
-                    className="text-blue-500 mr-2"
+                    className="text-white bg-blue-500 px-4 py-2 rounded-lg mr-2"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDeleteExercise(exercise._id)}
-                    className="text-red-500"
+                    className="text-white bg-red-500 px-4 py-2 rounded-lg"
                   >
                     Delete
                   </button>
@@ -205,55 +213,72 @@ const ExerciseForm = () => {
           </tbody>
         </table>
       </div>
+      <div className="flex flex-row justify-center items-center w-full">
+        <button
+          onClick={() => openModal()}
+          className="bg-blue-500 text-white px-4 py-2 rounded mb-4 mt-5"
+        >
+          Add Exercise
+        </button>
+      </div>
 
       <Modal isOpen={isModalOpen} onClose={closeModal}>
         <h3 className="text-lg font-medium mb-4">
-          {editingExercise ? 'Edit Exercise' : 'Add Exercise'}
+          {editingExercise ? "Edit Exercise" : "Add Exercise"}
         </h3>
         <form
+          className="border-2 rounded-lg px-2 py-2 border-black m-4"
           onSubmit={(e) => {
             e.preventDefault();
             editingExercise ? handleEditExercise() : handleAddExercise();
           }}
         >
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Exercise Name</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Exercise Name
+            </label>
             <input
               type="text"
               name="exerciseName"
               value={formData.exerciseName}
               onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8 "
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Muscle Group</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Muscle Group
+            </label>
             <input
               type="text"
               name="muscleGroup"
               value={formData.muscleGroup}
               onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8 sm:text-sm"
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Duration (min)</label>
+            <label className="block b text-sm font-medium text-gray-700">
+              Duration (min)
+            </label>
             <input
               type="number"
               name="duration"
               value={formData.duration}
               onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full px-2 py-2 border-2 rounded-md shadow-sm h-8 sm:text-sm "
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Calories Burned (cal)</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Calories Burned (cal)
+            </label>
             <input
               type="number"
               name="caloriesBurned"
               value={formData.caloriesBurned}
               onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full  rounded-md shadow-sm  sm:text-sm border-2  h-8"
             />
           </div>
           <div className="mt-6">
@@ -261,7 +286,7 @@ const ExerciseForm = () => {
               type="submit"
               className="bg-blue-500 text-white px-4 py-2 rounded"
             >
-              {editingExercise ? 'Update Exercise' : 'Add Exercise'}
+              {editingExercise ? "Update Exercise" : "Add Exercise"}
             </button>
           </div>
         </form>

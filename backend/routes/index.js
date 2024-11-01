@@ -931,4 +931,256 @@ app.post("/getExerciseDataRapidApi", async (req, res) => {
 app.listen(8000, () => {
   console.log("server is running at port 8000");
 });
+app.put('/updateUserGoals', authenticateToken, async (req, res) => {
+  const { user } = req.user;
+  const { calorieIntakeGoal, calorieBurntGoal } = req.body;
+
+  console.log('Request Body:', req.body); // Debugging line
+
+  // Validate required fields
+  
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      {
+        $set: {
+          'profile.calorieIntakeGoal': calorieIntakeGoal,
+          'profile.calorieBurntGoal': calorieBurntGoal,
+        },
+      },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedUser) {
+      console.error('User not found'); // Debugging line
+      return res.status(404).json({
+        error: true,
+        message: "User not found",
+      });
+    }
+
+    console.log('User goals updated successfully:', updatedUser); // Debugging line
+    return res.status(200).json({
+      error: false,
+      message: "User goals updated successfully",
+      user: updatedUser,
+    });
+  } catch (err) {
+    console.error('Error updating user goals:', err); // Debugging line
+    return res.status(500).json({
+      error: true,
+      message: "An error occurred while updating user goals",
+      details: err.message,
+    });
+  }
+});
+app.get('/getUserGoals', authenticateToken, async (req, res) => {
+  const { user } = req.user;
+
+  try {
+    const userDoc = await User.findById(user._id);
+
+    if (!userDoc) {
+      return res.status(404).json({
+        error: true,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      error: false,
+      message: "User goals retrieved successfully",
+      user: userDoc,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: true,
+      message: "An error occurred while retrieving user goals",
+      details: err.message,
+    });
+  }
+});
+app.get('/getCalorieIntakeForToday', authenticateToken, async (req, res) => {
+  const { user } = req.user;
+
+  if (!user) {
+    return res.status(404).json({
+      error: true,
+      message: "User not found",
+    });
+  }
+
+  console.log('Incoming request for getCalorieIntakeForToday');
+  const today = new Date();
+  const startDate = new Date(today.setHours(0, 0, 0, 0)); // Start of today's date
+  const endDate = new Date(today.setHours(23, 59, 59, 999)); // End of today's date
+  console.log('Date range:', { startDate, endDate });
+
+  try {
+    const userDoc = await User.findById(user._id);
+    if (!userDoc) {
+      console.log("User not found");
+      return res.status(404).json({ error: true, message: "User not found" });
+    }
+
+    const calorieIntakeGoal = userDoc.profile.calorieIntakeGoal;
+    console.log("Calorie Intake Goal:", calorieIntakeGoal);
+
+    const calorieIntakes = await CalorieIntake.find({
+      user: user._id,
+      date: { $gte: startDate, $lte: endDate },
+    });
+
+    console.log('Found calorie intakes:', calorieIntakes);
+
+    const totalCalories = calorieIntakes.reduce((sum, intake) => sum + intake.calories, 0);
+
+    return res.status(200).json({
+      calorieIntakeGoal,
+      calorieIntakeConsumed: totalCalories,
+      message: "Calorie intake for today retrieved successfully",
+    });
+  } catch (err) {
+    console.error('Error fetching calorie intake for today:', err);
+    return res.status(500).json({
+      error: true,
+      message: "An error occurred while fetching calorie intake for today",
+      details: err.message,
+    });
+  }
+});
+
+app.get('/getCalorieBurntForToday', authenticateToken, async (req, res) => {
+  const { user } = req.user;
+
+  if (!user) {
+    return res.status(404).json({
+      error: true,
+      message: "User not found",
+    });
+  }
+
+  console.log('Incoming request for getCalorieBurntForToday');
+  const today = new Date();
+  const startDate = new Date(today.setHours(0, 0, 0, 0)); // Start of today's date
+  const endDate = new Date(today.setHours(23, 59, 59, 999)); // End of today's date
+  console.log('Date range:', { startDate, endDate });
+
+  try {
+    const userDoc = await User.findById(user._id);
+    if (!userDoc) {
+      console.log("User not found");
+      return res.status(404).json({ error: true, message: "User not found" });
+    }
+
+    const calorieBurntGoal = userDoc.profile.calorieBurntGoal;
+    console.log("Calorie Burnt Goal:", calorieBurntGoal);
+
+    const exercises = await Exercise.find({
+      user: user._id,
+      date: { $gte: startDate, $lte: endDate },
+    });
+
+    console.log('Found exercises:', exercises);
+
+    const totalCaloriesBurned = exercises.reduce((sum, exercise) => {
+      return sum + exercise.exercises.reduce((exSum, ex) => exSum + ex.caloriesBurned, 0);
+    }, 0);
+
+    return res.status(200).json({
+      calorieBurntGoal,
+      calorieBurntBurned: totalCaloriesBurned,
+      message: "Calorie burnt for today retrieved successfully",
+    });
+  } catch (err) {
+    console.error('Error fetching calorie burnt for today:', err);
+    return res.status(500).json({
+      error: true,
+      message: "An error occurred while fetching calorie burnt for today",
+      details: err.message,
+    });
+  }
+});
+app.get('/getCalorieComparisonForPast5Days', authenticateToken, async (req, res) => {
+  const { user } = req.user;
+  if (!user) {
+    return res.status(404).json({ error: true, message: "User not found" });
+  }
+
+  const today = new Date();
+  today.setHours(23, 59, 59, 999); // End of today
+  const fiveDaysAgo = new Date();
+  fiveDaysAgo.setDate(today.getDate() - 4); // Start from 5 days ago
+  fiveDaysAgo.setHours(0, 0, 0, 0);
+
+  console.log('Date range:', { fiveDaysAgo, today });
+
+  try {
+    // Fetch calorie intake data within the past 5 days
+    const calorieIntakeRecords = await CalorieIntake.find({
+      user: user._id,
+      date: { $gte: fiveDaysAgo, $lte: today },
+    });
+    console.log('Calorie Intake Records:', calorieIntakeRecords);
+
+    // Fetch exercise data within the past 5 days
+    const exerciseRecords = await Exercise.find({
+      user: user._id,
+      date: { $gte: fiveDaysAgo, $lte: today },
+    });
+    console.log('Exercise Records:', exerciseRecords);
+
+    // Create labels for each of the past 5 days
+    const labels = Array.from({ length: 5 }, (_, i) => {
+      const date = new Date(today.getTime() - (4 - i) * 24 * 60 * 60 * 1000);
+      return date.toISOString().split('T')[0];
+    });
+    console.log('Labels for comparison:', labels);
+
+    // Calculate calorie intake per day
+    const calorieIntake = labels.map(date => {
+      const dailyIntake = calorieIntakeRecords
+        .filter(record => record.date.toISOString().split('T')[0] === date)
+        .reduce((sum, record) => sum + record.calories, 0);
+      return dailyIntake;
+    });
+
+    // Calculate calories burnt per day
+    const calorieBurnt = labels.map(date => {
+      const dailyBurn = exerciseRecords
+        .filter(record => record.date.toISOString().split('T')[0] === date)
+        .reduce((sum, record) => {
+          return sum + record.exercises.reduce((exSum, ex) => exSum + ex.caloriesBurned, 0);
+        }, 0);
+      return dailyBurn;
+    });
+
+    const comparisonData = {
+      labels,
+      datasets: [
+        {
+          label: 'Calorie Intake',
+          data: calorieIntake,
+          backgroundColor: '#36A2EB',
+        },
+        {
+          label: 'Calorie Burnt',
+          data: calorieBurnt,
+          backgroundColor: '#FF6384',
+        },
+      ],
+    };
+
+    return res.status(200).json(comparisonData);
+  } catch (err) {
+    console.error('Error fetching calorie comparison for past 5 days:', err);
+    return res.status(500).json({
+      error: true,
+      message: "An error occurred while fetching calorie comparison for past 5 days",
+      details: err.message,
+    });
+  }
+});
+
+
 module.exports = app;

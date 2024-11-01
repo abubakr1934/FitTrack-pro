@@ -9,7 +9,8 @@ const Sidebar = ({ activePage, setActivePage }) => {
     { id: 'exercise-data', label: 'Exercise Data' },
     { id: 'food-form', label: 'Add/Edit Food Item' },
     { id: 'food-data', label: 'Food Data' },
-    { id: 'diet-plan', label: 'Custom Diet Plan' }
+    { id: 'diet-plan', label: 'Custom Diet Plan' },
+    {id:'edit-goals',label:'Edit Goals'}
   ];
 
   return (

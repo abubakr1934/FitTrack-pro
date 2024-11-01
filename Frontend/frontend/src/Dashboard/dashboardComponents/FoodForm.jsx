@@ -156,12 +156,7 @@ const FoodForm = () => {
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Add/Edit Food Entry</h2>
 
-      <button
-        onClick={() => openModal()}
-        className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
-      >
-        Add Food Entry
-      </button>
+      
 
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
@@ -193,6 +188,7 @@ const FoodForm = () => {
               </th>
             </tr>
           </thead>
+          
           <tbody className="bg-white divide-y divide-gray-200">
             {foodEntries.map((foodEntry) => (
               <tr key={foodEntry._id}>
@@ -205,13 +201,13 @@ const FoodForm = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
                     onClick={() => openModal(foodEntry)}
-                    className="text-blue-500 mr-2"
+                    className="text-white bg-blue-500 px-4 py-2 rounded-lg mr-2"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDeleteFoodEntry(foodEntry._id)}
-                    className="text-red-500"
+                    className="text-white bg-red-500 px-4 py-2 rounded-lg"
                   >
                     Delete
                   </button>
@@ -221,12 +217,21 @@ const FoodForm = () => {
           </tbody>
         </table>
       </div>
+      <div className="flex flex-row justify-center items-center w-full">
+        <button
+          onClick={() => openModal()}
+          className="bg-blue-500 text-white px-4 py-2 rounded mb-4 mt-5"
+        >
+          Add Food Entry
+        </button>
+      </div>
 
       <Modal isOpen={isModalOpen} onClose={closeModal}>
         <h3 className="text-lg font-medium mb-4">
           {editingFoodEntry ? 'Edit Food Entry' : 'Add Food Entry'}
         </h3>
         <form
+          className="border-2 rounded-lg px-2 py-2 border-black m-4"
           onSubmit={(e) => {
             e.preventDefault();
             editingFoodEntry ? handleEditFoodEntry() : handleAddFoodEntry();
@@ -239,7 +244,7 @@ const FoodForm = () => {
               name="foodName"
               value={formData.foodName}
               onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8"
             />
           </div>
           <div className="mb-4">
@@ -249,7 +254,7 @@ const FoodForm = () => {
               name="quantity"
               value={formData.quantity}
               onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8"
             />
           </div>
           <div className="mb-4">
@@ -259,7 +264,7 @@ const FoodForm = () => {
               name="fat"
               value={formData.fat}
               onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8"
             />
           </div>
           <div className="mb-4">
@@ -269,7 +274,7 @@ const FoodForm = () => {
               name="protein"
               value={formData.protein}
               onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8"
             />
           </div>
           <div className="mb-4">
@@ -279,7 +284,7 @@ const FoodForm = () => {
               name="carbs"
               value={formData.carbs}
               onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8"
             />
           </div>
           <div className="mb-4">
@@ -289,7 +294,7 @@ const FoodForm = () => {
               name="calories"
               value={formData.calories}
               onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8"
             />
           </div>
           <div className="mt-6">

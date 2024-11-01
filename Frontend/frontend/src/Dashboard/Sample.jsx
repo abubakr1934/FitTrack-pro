@@ -8,7 +8,7 @@ import ExerciseData from './dashboardComponents/ExerciseData';
 import ExerciseForm from './dashboardComponents/ExerciseForm';
 import CustomDietPlan from './dashboardComponents/CustomDietPlan';
 import DashboardComponent from './dashboardComponents/DashboardComponent';
-
+import EditGoals from './dashboardComponents/EditGoals';
 const Sample = () => {
   const [activePage, setActivePage] = useState('dashboard');
 
@@ -26,6 +26,8 @@ const Sample = () => {
         return <FoodData />;
       case 'diet-plan':
         return <CustomDietPlan />;
+      case 'edit-goals':
+        return <EditGoals/>;
       default:
         return <DashboardComponent />;
     }
