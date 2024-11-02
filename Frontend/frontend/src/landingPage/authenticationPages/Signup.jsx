@@ -1,10 +1,9 @@
 import React, { useState } from "react";
-import { SiGmail } from "react-icons/si";
-import { FaFacebook } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const SignUp = () => {
+  const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,7 +22,12 @@ const SignUp = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:8000/signup", { email, password });
+      const response = await axios.post("http://localhost:8000/signup", {
+        fullname,
+        email,
+        password,
+        confirmPassword,
+      });
       if (response.data.error) {
         setError(response.data.message);
       } else {
@@ -31,7 +35,17 @@ const SignUp = () => {
         navigate("/login");
       }
     } catch (error) {
-      setError("An error occurred during signup");
+      console.error("Signup error:", error); // Log the error for debugging
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        setError(`Server responded with status: ${error.response.status}`);
+      } else if (error.request) {
+        // The request was made but no response was received
+        setError("No response received from the server. Please check your network connection.");
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setError("An error occurred during signup. Please try again.");
+      }
     }
   };
 
@@ -42,6 +56,16 @@ const SignUp = () => {
           <h2 className="text-2xl font-bold mb-6 text-gray-800">Sign Up</h2>
           
           <form onSubmit={handleSignUp}>
+            <div className="mb-4">
+              <label className="block text-gray-700">Full Name</label>
+              <input
+                type="text"
+                className="w-full p-2 border border-gray-300 rounded mt-1"
+                placeholder="Enter your full name"
+                onChange={(e) => setFullname(e.target.value)}
+                required
+              />
+            </div>
             <div className="mb-4">
               <label className="block text-gray-700">Email</label>
               <input
