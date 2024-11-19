@@ -8,10 +8,6 @@ const FoodForm = () => {
   const [formData, setFormData] = useState({
     foodName: '',
     quantity: '',
-    fat: '',
-    protein: '',
-    carbs: '',
-    calories: '',
   });
   const [editingFoodEntry, setEditingFoodEntry] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -120,20 +116,12 @@ const FoodForm = () => {
       setFormData({
         foodName: foodEntry.foodName,
         quantity: foodEntry.quantity,
-        fat: foodEntry.fat,
-        protein: foodEntry.protein,
-        carbs: foodEntry.carbs,
-        calories: foodEntry.calories,
       });
     } else {
       setEditingFoodEntry(null);
       setFormData({
         foodName: '',
         quantity: '',
-        fat: '',
-        protein: '',
-        carbs: '',
-        calories: '',
       });
     }
     setIsModalOpen(true);
@@ -145,18 +133,13 @@ const FoodForm = () => {
     setFormData({
       foodName: '',
       quantity: '',
-      fat: '',
-      protein: '',
-      carbs: '',
-      calories: '',
     });
   };
 
   return (
     <div className="p-6">
+      <p className="text-s text-purple-400 font-semibold mb-4">The data for food items consumed is/will be extracted from <span className='hover:text-purple-500 underline'><a href="https://www.nutritionix.com/">NutritionX : Largest verified Nutrition Database.</a></span></p>
       <h2 className="text-2xl font-bold mb-4">Add/Edit Food Entry</h2>
-
-      
 
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
@@ -188,7 +171,6 @@ const FoodForm = () => {
               </th>
             </tr>
           </thead>
-          
           <tbody className="bg-white divide-y divide-gray-200">
             {foodEntries.map((foodEntry) => (
               <tr key={foodEntry._id}>
@@ -253,46 +235,6 @@ const FoodForm = () => {
               type="number"
               name="quantity"
               value={formData.quantity}
-              onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Fat (g)</label>
-            <input
-              type="number"
-              name="fat"
-              value={formData.fat}
-              onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Protein (g)</label>
-            <input
-              type="number"
-              name="protein"
-              value={formData.protein}
-              onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Carbs (g)</label>
-            <input
-              type="number"
-              name="carbs"
-              value={formData.carbs}
-              onChange={handleInputChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">Calories (cal)</label>
-            <input
-              type="number"
-              name="calories"
-              value={formData.calories}
               onChange={handleInputChange}
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm border-2  h-8"
             />

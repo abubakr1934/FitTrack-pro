@@ -10,7 +10,9 @@ const SignUp = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
-
+  const timeout=()=>{
+    navigate("/login")
+  }
   const handleSignUp = async (e) => {
     e.preventDefault();
     setError("");
@@ -31,8 +33,8 @@ const SignUp = () => {
       if (response.data.error) {
         setError(response.data.message);
       } else {
-        setSuccess(response.data.message);
-        navigate("/login");
+        setSuccess(response.data.message +" Redirecting to login page in 2 seconds");
+        setTimeout(timeout,2000);
       }
     } catch (error) {
       console.error("Signup error:", error); // Log the error for debugging

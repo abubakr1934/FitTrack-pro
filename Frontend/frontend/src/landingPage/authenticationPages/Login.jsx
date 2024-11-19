@@ -10,7 +10,9 @@ const Login = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
-
+  function timeout(){
+    navigate("/dashboard")
+  }
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -21,11 +23,11 @@ const Login = () => {
       if (response.data.error) {
         setError(response.data.message);
       } else {
-        setSuccess(response.data.message);
+        setSuccess(response.data.message +" Redirecting in 3 seconds");
         // Store the access token in local storage or context
         localStorage.setItem("accessToken", response.data.accessToken);
         // Redirect to the main application page
-        navigate("/dashboard");
+        setTimeout(timeout,3000)
       }
     } catch (error) {
       setError("An error occurred during login");

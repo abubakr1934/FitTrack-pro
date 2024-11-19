@@ -9,7 +9,6 @@ const ExerciseForm = () => {
     exerciseName: "",
     muscleGroup: "",
     duration: "",
-    caloriesBurned: "",
   });
   const [editingExercise, setEditingExercise] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -29,7 +28,7 @@ const ExerciseForm = () => {
           },
         }
       );
-
+      console.log(response);
       setExercises(response.data.exercises);
     } catch (error) {
       setError("Failed to fetch exercises for today.");
@@ -126,7 +125,6 @@ const ExerciseForm = () => {
         exerciseName: exercise.exercises[0].exerciseName,
         muscleGroup: exercise.exercises[0].muscleGroup,
         duration: exercise.exercises[0].duration,
-        caloriesBurned: exercise.exercises[0].caloriesBurned,
       });
     } else {
       setEditingExercise(null);
@@ -134,7 +132,6 @@ const ExerciseForm = () => {
         exerciseName: "",
         muscleGroup: "",
         duration: "",
-        caloriesBurned: "",
       });
     }
     setIsModalOpen(true);
@@ -147,12 +144,12 @@ const ExerciseForm = () => {
       exerciseName: "",
       muscleGroup: "",
       duration: "",
-      caloriesBurned: "",
     });
   };
 
   return (
     <div className="p-6">
+      <p className="text-s text-purple-400 font-semibold mb-4">The data for Exercises performed  is/will be extracted from <span className='hover:text-purple-500 underline'><a href="https://www.nutritionix.com/">NutritionX : Largest verified Nutrition Database.</a></span></p>
       <h2 className="text-2xl font-bold mb-4">Add/Edit Exercise</h2>
 
       {loading && <p>Loading...</p>}
@@ -267,18 +264,6 @@ const ExerciseForm = () => {
               value={formData.duration}
               onChange={handleInputChange}
               className="mt-1 block w-full px-2 py-2 border-2 rounded-md shadow-sm h-8 sm:text-sm "
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Calories Burned (cal)
-            </label>
-            <input
-              type="number"
-              name="caloriesBurned"
-              value={formData.caloriesBurned}
-              onChange={handleInputChange}
-              className="mt-1 block w-full  rounded-md shadow-sm  sm:text-sm border-2  h-8"
             />
           </div>
           <div className="mt-6">

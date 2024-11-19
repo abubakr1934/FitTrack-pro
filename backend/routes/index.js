@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const apiKey = "AIzaSyC9bRubY0YXF3fDkAHjfIbOquoLeTfhf6k";
+const apiKey = "AIzaSyA6DJeI4XnMBXX7hvJ1kpKp58QdLGQpoRc";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
@@ -66,8 +66,7 @@ app.post("/signup", async (req, res) => {
     await newUser.save();
     const accessToken = jwt.sign({ newUser }, ACCESS_TOKEN_SECRET, {
       expiresIn: "36000m",
-    }); //generated access token for the user
-    // console.log(newUser);
+    }); 
     return res.status(200).json({
       newUser,
       accessToken,
@@ -130,31 +129,53 @@ app.post('/logout', (req, res) => {
 
   return res.json({ message: 'Logout successful' });
 });
+
+const axios = require('axios');
+
 app.post("/addExercise", authenticateToken, async (req, res) => {
-  const { exerciseName, muscleGroup, duration, caloriesBurned } = req.body;
+  const { exerciseName, muscleGroup, duration } = req.body;
   const { user } = req.user;
 
-  if (!exerciseName || !muscleGroup || !duration || !caloriesBurned) {
+  if (!exerciseName || !muscleGroup || !duration) {
     return res.json({
       error: true,
-      message: "All fields are required",
+      message: "Exercise name, muscle group, and duration are required",
     });
   }
 
   try {
+    const nutritionixResponse = await axios.post('https://trackapi.nutritionix.com/v2/natural/exercise', {
+      query: `${exerciseName} for ${duration} minutes`,
+      gender: 'male', 
+      weight_kg: user.profile.weight, 
+      height_cm: user.profile.height, 
+      age: user.profile.age, 
+    }, {
+      headers: {
+        'x-app-id': '7ef74ae8',
+        'x-app-key': '78bc93c3e71b061e7acf5f1cfca5f3e1', 
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log(nutritionixResponse.data.exercises);
+    const caloriesBurned = nutritionixResponse.data.exercises[0].nf_calories;
     const newExercise = new Exercise({
       user: user._id,
       exercises: [{ exerciseName, muscleGroup, duration, caloriesBurned }],
       totalCaloriesBurned: caloriesBurned,
     });
 
+    console.log("Exercise Document to be Saved:", newExercise);
     await newExercise.save();
+    console.log("Exercise Saved Successfully");
+
     return res.status(200).json({
       error: false,
       newExercise,
       message: "Exercise added successfully",
     });
   } catch (err) {
+    console.error("Error Occurred:", err);
     return res.status(500).json({
       error: true,
       message: "An error occurred while adding the exercise",
@@ -267,26 +288,46 @@ app.get('/getExercisesForToday', authenticateToken, async (req, res) => {
 
 // Add Calorie Intake
 app.post("/addCalorieIntake", authenticateToken, async (req, res) => {
-  const { foodName, quantity, fat, protein, carbs, calories } = req.body;
+  const { foodName, quantity } = req.body;
   const { user } = req.user;
 
-  // Validate required fields
-  if (!foodName || !quantity || !fat || !protein || !carbs || !calories) {
+  if (!foodName || !quantity) {
     return res.status(400).json({
       error: true,
-      message: "Please provide all required fields: foodName, quantity, fat, protein, carbs, and calories",
+      message: "Please provide all required fields: foodName and quantity",
     });
   }
 
   try {
+    const nutritionixResponse = await axios.post('https://trackapi.nutritionix.com/v2/natural/nutrients', {
+      query: `${quantity} ${foodName}`,
+    }, {
+      headers: {
+        'x-app-id': '7ef74ae8', 
+        'x-app-key': '78bc93c3e71b061e7acf5f1cfca5f3e1',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const foodItems = nutritionixResponse.data.foods;
+    if (!foodItems || foodItems.length === 0) {
+      return res.status(400).json({
+        error: true,
+        message: "Unable to fetch nutritional data for the provided food item",
+      });
+    }
+
+    const foodItem = foodItems[0];
+    const { nf_calories, nf_total_fat, nf_protein, nf_total_carbohydrate } = foodItem;
+
     const newCalorieIntake = new CalorieIntake({
       user: user._id,
       foodName,
       quantity,
-      fat,
-      protein,
-      carbs,
-      calories,
+      fat: nf_total_fat,
+      protein: nf_protein,
+      carbs: nf_total_carbohydrate,
+      calories: nf_calories,
     });
 
     await newCalorieIntake.save();
@@ -297,6 +338,7 @@ app.post("/addCalorieIntake", authenticateToken, async (req, res) => {
       message: "Calorie intake added successfully",
     });
   } catch (err) {
+    console.error("Error Occurred:", err);
     return res.status(500).json({
       error: true,
       message: "An error occurred while adding calorie intake",
@@ -673,8 +715,7 @@ app.get("/get-user", authenticateToken, async (req, res) => {
 //generate personalised diet plan and store it in the respective model
 app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
   const { user } = req.user;
-  const { weight, goal, height, dietPreference, mealsPerDay, otherDetails } =
-    req.body;
+  const { weight, goal, height, dietPreference, mealsPerDay, otherDetails, ageGroup, healthConditions } = req.body;
   const userId = user._id;
 
   // Validate required fields
@@ -684,12 +725,14 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
     !height ||
     !dietPreference ||
     !mealsPerDay ||
-    !otherDetails
+    !otherDetails ||
+    !ageGroup ||
+    !healthConditions
   ) {
     return res.status(400).json({
       error: true,
       message:
-        "Please provide all required fields: weight, goal, height, dietPreference, mealsPerDay, and otherDetails",
+        "Please provide all required fields: weight, goal, height, dietPreference, mealsPerDay, otherDetails, ageGroup, and healthConditions",
     });
   }
 
@@ -706,12 +749,14 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
     Create a diet plan for a person with the following details:
     - Current weight: ${weight} kg
     - Height: ${height} cm
+    - Age group: ${ageGroup}
+    - Health conditions: ${healthConditions}
     - Goal: ${goal} (e.g., lose weight, gain muscle, maintain weight)
     - Diet preference: ${dietPreference} (vegetarian or non-vegetarian)
     - Meals per day: ${mealsPerDay}
     ${otherDetails ? `- Other details: ${otherDetails}` : ""}
     
-    The diet plan should include meal names, food items, and the nutritional value for each meal (fat, protein, carbs, calories). Format the response as JSON with the following structure:
+    The diet plan should include meal names, food items, and the nutritional value for each meal (fat, protein, carbs, calories). Additionally, provide insights about the plan, including a timeline for achieving the goal. The timeline should be divided into three timeframes: first 4 weeks, next 4 weeks, and the final 4 weeks. For each timeframe, provide only the expected numerical weight loss or gain in kilograms. Format the response as JSON with the following structure:
     {
       "diet_plan": {
         "meals": [
@@ -726,6 +771,13 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
             }
           }
         ]
+      },
+      "insights": {
+        "timeline": {
+          "first_4_weeks": "Expected weight loss or gain in kilograms (e.g., 1-2 kg loss)",
+          "next_4_weeks": "Expected weight loss or gain in kilograms (e.g., 2-3 kg loss)",
+          "final_4_weeks": "Expected weight loss or gain in kilograms (e.g., 3-4 kg loss)"
+        }
       }
     }
   `;
@@ -758,7 +810,7 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
     }
 
     // Validate the structure of the response
-    if (!dietPlanResponse.diet_plan || !dietPlanResponse.diet_plan.meals) {
+    if (!dietPlanResponse.diet_plan || !dietPlanResponse.diet_plan.meals || !dietPlanResponse.insights || !dietPlanResponse.insights.timeline) {
       return res.status(400).json({
         error: true,
         message:
@@ -780,6 +832,8 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
       dietPreference,
       mealsPerDay,
       meals: dietPlanResponse.diet_plan.meals,
+      ageGroup,
+      healthConditions,
     });
 
     // Log the diet plan before saving to ensure user field is set
@@ -792,6 +846,7 @@ app.post("/generate-diet-plan", authenticateToken, async (req, res) => {
       error: false,
       message: "Diet plan generated and saved successfully",
       dietPlan: dietPlanNew,
+      timeline: dietPlanResponse.insights.timeline,
     });
   } catch (error) {
     console.error("Internal Server Error:", error);

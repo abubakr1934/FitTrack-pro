@@ -8,7 +8,10 @@ const DietPlan = () => {
   const [dietPreference, setDietPreference] = useState("");
   const [mealsPerDay, setMealsPerDay] = useState("");
   const [otherDetails, setOtherDetails] = useState("");
+  const [ageGroup, setAgeGroup] = useState("");
+  const [healthConditions, setHealthConditions] = useState("");
   const [dietPlan, setDietPlan] = useState(null);
+  const [timeline, setTimeline] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -24,8 +27,10 @@ const DietPlan = () => {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
       });
+      console.log(response);
       if (response.data.dietPlan) {
         setDietPlan(response.data.dietPlan);
+        setTimeline(response.data.timeline || {}); // Ensure timeline is initialized
       } else {
         setShowForm(true);
       }
@@ -50,6 +55,8 @@ const DietPlan = () => {
           dietPreference,
           mealsPerDay,
           otherDetails,
+          ageGroup,
+          healthConditions,
         },
         {
           headers: {
@@ -63,6 +70,8 @@ const DietPlan = () => {
         setDietPlan(null);
       } else {
         setDietPlan(response.data.dietPlan);
+        setTimeline(response.data.timeline || {}); // Ensure timeline is initialized
+        console.log(response.data.timeline);
         setShowForm(false);
       }
     } catch (err) {
@@ -81,6 +90,7 @@ const DietPlan = () => {
         },
       });
       setDietPlan(null);
+      setTimeline({});
       setShowForm(true);
     } catch (err) {
       console.error("Error deleting diet plan:", err);
@@ -89,13 +99,13 @@ const DietPlan = () => {
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto shadow-lg rounded-lg bg-white">
+    <div className="p-6 max-w-2xl mx-auto shadow-lg rounded-lg bg-white">
       <h2 className="text-3xl font-semibold text-center text-gray-800 mb-6">
         Custom Diet Plan
       </h2>
 
       {dietPlan ? (
-        <div clas>
+        <div>
           <h3 className="text-xl font-semibold text-gray-800 mb-2">
             Your Diet Plan
           </h3>
@@ -118,6 +128,14 @@ const DietPlan = () => {
               </div>
             </div>
           ))}
+          <div className="mb-4">
+            <h4 className="text-lg font-semibold text-gray-800">Timeline</h4>
+            <ul className="list-disc ml-5 text-gray-600">
+              <li><strong>First 4 Weeks:</strong> {timeline.first_4_weeks || "N/A"}</li>
+              <li><strong>Next 4 Weeks:</strong> {timeline.next_4_weeks || "N/A"}</li>
+              <li><strong>Final 4 Weeks:</strong> {timeline.final_4_weeks || "N/A"}</li>
+            </ul>
+          </div>
           <button
             onClick={handleDelete}
             className="w-full py-3 bg-red-600 text-white font-semibold rounded-md shadow-lg hover:bg-red-700 transition duration-300 ease-in-out"
@@ -151,6 +169,36 @@ const DietPlan = () => {
                 onChange={(e) => setHeight(e.target.value)}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600">
+                Age Group
+              </label>
+              <select
+                value={ageGroup}
+                onChange={(e) => setAgeGroup(e.target.value)}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-indigo-500"
+              >
+                <option value="">Select age group</option>
+                <option value="15-30">15-30</option>
+                <option value="31-45">31-45</option>
+                <option value="46-60">46-60</option>
+                <option value="60+">60+</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600">
+                Health Conditions
+              </label>
+              <textarea
+                value={healthConditions}
+                onChange={(e) => setHealthConditions(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-indigo-500"
+                rows="3"
               />
             </div>
 
