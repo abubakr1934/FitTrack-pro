@@ -19,9 +19,11 @@ const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
+const exercisePlan=require("../models/exercisePlan.model");
 const Exercise = require("../models/calorieBurnt.model");
 const CalorieIntake = require("../models/calorieIntake.model");
 const dietPlan = require("../models/dietPlan.model");
+const ExercisePlan=require("../models/exercisePlan.model");
 const { authenticateToken } = require("../utilities.js");
 const config = require("../configuration/config.json");
 const mongoose = require("mongoose");
@@ -1237,5 +1239,199 @@ app.get('/getCalorieComparisonForPast5Days', authenticateToken, async (req, res)
   }
 });
 
+app.post("/generate-exercise-plan", authenticateToken, async (req, res) => {
+  const { user } = req.user;
+  const { goal, exerciseSessionPerWeek, healthConditions } = req.body;
+  const userId = user._id;
+
+  if (!goal || !exerciseSessionPerWeek || !healthConditions) {
+    return res.status(400).json({
+      error: true,
+      message: "Please provide all required fields: goal, exerciseSessionPerWeek, and healthConditions",
+    });
+  }
+
+  if (!userId || !user.profile || !user.profile.height || !user.profile.weight) {
+    return res.status(400).json({
+      error: true,
+      message: "User profile is incomplete. Height and weight must be provided in the user's profile.",
+    });
+  }
+
+  const height=user.profile.height;
+  const weight=user.profile.weight;
+  const calorieIntakeGoal=user.profile.calorieIntakeGoal;
+  const calorieBurntGoal=user.profile.calorieBurntGoal;
+
+
+  const prompt = `
+    Create an exercise plan for a person with the following details:
+    - Current weight: ${weight} kg
+    - Height: ${height} cm
+    - Goal: ${goal} (e.g., lose weight, gain muscle, maintain weight)
+    - Exercise sessions per week: ${exerciseSessionPerWeek}
+    - Health conditions: ${healthConditions}
+
+    The exercise plan should include workout names, duration, intensity, and calories burned for each session. Additionally, provide insights about the plan, including a timeline for achieving the goal. The timeline should be divided into three phases: first 4 weeks, next 4 weeks, and the final 4 weeks. For each phase, provide only the expected numerical weight loss or gain in kilograms. Format the response as JSON with the following structure:
+    {
+      "exercise_plan": {
+        "workouts": [
+          {
+            "workoutName": "Workout Name",
+            "duration": "Duration in minutes",
+            "intensity": "Intensity level (low, moderate, high)",
+            "caloriesBurned": "Calories burned in kcal"
+          }
+        ]
+      },
+      "insights": {
+        "timeline": {
+          "first_4_weeks": "Expected weight loss or gain in kilograms (e.g., 1-2 kg loss)",
+          "next_4_weeks": "Expected weight loss or gain in kilograms (e.g., 2-3 kg loss)",
+          "final_4_weeks": "Expected weight loss or gain in kilograms (e.g., 3-4 kg loss)"
+        }
+      }
+    }
+  `;
+
+  try {
+    const chatSession = model.startChat({
+      generationConfig,
+      history: [],
+    });
+    const result = await chatSession.sendMessage(prompt);
+
+    const jsonStart = result.response.text().indexOf("{");
+    const jsonEnd = result.response.text().lastIndexOf("}");
+    const jsonResponse = result.response.text().substring(jsonStart, jsonEnd + 1);
+
+    let exercisePlanResponse;
+    try {
+      exercisePlanResponse = JSON.parse(jsonResponse);
+    } catch (error) {
+      return res.status(400).json({
+        error: true,
+        message: "Error parsing exercise plan response. Response was: " + jsonResponse,
+      });
+    }
+
+    if (
+      !exercisePlanResponse.exercise_plan ||
+      !exercisePlanResponse.exercise_plan.workouts ||
+      !exercisePlanResponse.insights ||
+      !exercisePlanResponse.insights.timeline
+    ) {
+      return res.status(400).json({
+        error: true,
+        message: "Invalid exercise plan response structure. Response was: " + jsonResponse,
+      });
+    }
+    exercisePlanResponse.exercise_plan.workouts.forEach((workout) => {
+      workout.caloriesBurned = parseFloat(
+        workout.caloriesBurned.replace("kcal", "").trim()
+      );
+    });
+
+    const exercisePlanNew = new ExercisePlan({
+      user: userId,
+      goal,
+      exerciseSessionPerWeek,
+      healthConditions,
+      calorieIntakeGoal: user.profile.calorieIntakeGoal,
+      calorieBurntGoal: user.profile.calorieBurntGoal,
+      exercises: exercisePlanResponse.exercise_plan.workouts,
+    });
+
+    console.log("Exercise Plan to be saved:", exercisePlanNew);
+
+    await exercisePlanNew.save();
+
+    return res.status(200).json({
+      error: false,
+      message: "Exercise plan generated and saved successfully",
+      exercisePlan: exercisePlanNew,
+      timeline: exercisePlanResponse.insights.timeline,
+    });
+  } catch (error) {
+    console.error("Internal Server Error:", error);
+    return res.status(500).json({
+      error: true,
+      message: "Some internal error occurred",
+    });
+  }
+});
+app.get("/get-exercise-plan", authenticateToken, async (req, res) => {
+  const { user } = req.user;
+  const userId = user._id;
+
+  // Ensure userId is provided
+  if (!userId) {
+    return res.status(404).json({
+      error: true,
+      message: "User not found",
+    });
+  }
+
+  try {
+    // Find the exercise plan for the user
+    const exercisePlanDoc = await ExercisePlan.findOne({ user: userId });
+
+    if (!exercisePlanDoc) {
+      return res.status(404).json({
+        error: true,
+        message: "No exercise plan initialized for this user",
+      });
+    }
+
+    return res.status(200).json({
+      error: false,
+      message: "Exercise plan retrieved successfully",
+      exercisePlan: exercisePlanDoc,
+    });
+  } catch (error) {
+    console.error("Internal Server Error:", error);
+    return res.status(500).json({
+      error: true,
+      message: "Internal error occurred",
+    });
+  }
+});
+app.delete("/delete-exercise-plan", authenticateToken, async (req, res) => {
+  const { user } = req.user;
+  const userId = user._id;
+
+  // Ensure userId is provided
+  if (!userId) {
+    return res.status(404).json({
+      error: true,
+      message: "User not found",
+    });
+  }
+
+  try {
+    // Find and delete the exercise plan
+    const exercisePlanDoc = await ExercisePlan.findOne({ user: userId });
+
+    if (!exercisePlanDoc) {
+      return res.status(404).json({
+        error: true,
+        message: "No exercise plan initialized for this user",
+      });
+    }
+
+    await exercisePlanDoc.deleteOne();
+
+    return res.status(200).json({
+      error: false,
+      message: "Exercise plan deleted successfully",
+    });
+  } catch (error) {
+    console.error("Internal Server Error:", error);
+    return res.status(500).json({
+      error: true,
+      message: "Internal error occurred",
+    });
+  }
+});
 
 module.exports = app;

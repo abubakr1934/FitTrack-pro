@@ -9,7 +9,6 @@ const FoodForm = () => {
     foodName: '',
     quantity: '',
   });
-  const [editingFoodEntry, setEditingFoodEntry] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -67,29 +66,6 @@ const FoodForm = () => {
     }
   };
 
-  const handleEditFoodEntry = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      await axios.put(`http://localhost:8000/updateCalorieIntake/${editingFoodEntry._id}`, formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-      });
-
-      // Refetch food entries after successful edit
-      fetchFoodEntriesForToday();
-
-      // Reset form data and close modal
-      closeModal();
-    } catch (error) {
-      setError('Failed to edit food entry.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeleteFoodEntry = async (foodEntryId) => {
     setLoading(true);
     setError(null);
@@ -110,26 +86,16 @@ const FoodForm = () => {
     }
   };
 
-  const openModal = (foodEntry = null) => {
-    if (foodEntry) {
-      setEditingFoodEntry(foodEntry);
-      setFormData({
-        foodName: foodEntry.foodName,
-        quantity: foodEntry.quantity,
-      });
-    } else {
-      setEditingFoodEntry(null);
-      setFormData({
-        foodName: '',
-        quantity: '',
-      });
-    }
+  const openModal = () => {
+    setFormData({
+      foodName: '',
+      quantity: '',
+    });
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setEditingFoodEntry(null);
     setFormData({
       foodName: '',
       quantity: '',
@@ -182,12 +148,6 @@ const FoodForm = () => {
                 <td className="px-6 py-4 whitespace-nowrap">{foodEntry.calories}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
-                    onClick={() => openModal(foodEntry)}
-                    className="text-white bg-blue-500 px-4 py-2 rounded-lg mr-2"
-                  >
-                    Edit
-                  </button>
-                  <button
                     onClick={() => handleDeleteFoodEntry(foodEntry._id)}
                     className="text-white bg-red-500 px-4 py-2 rounded-lg"
                   >
@@ -209,14 +169,12 @@ const FoodForm = () => {
       </div>
 
       <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <h3 className="text-lg font-medium mb-4">
-          {editingFoodEntry ? 'Edit Food Entry' : 'Add Food Entry'}
-        </h3>
+        <h3 className="text-lg font-medium mb-4">Add Food Entry</h3>
         <form
           className="border-2 rounded-lg px-2 py-2 border-black m-4"
           onSubmit={(e) => {
             e.preventDefault();
-            editingFoodEntry ? handleEditFoodEntry() : handleAddFoodEntry();
+            handleAddFoodEntry();
           }}
         >
           <div className="mb-4">
@@ -244,7 +202,7 @@ const FoodForm = () => {
               type="submit"
               className="bg-blue-500 text-white px-4 py-2 rounded"
             >
-              {editingFoodEntry ? 'Update Food Entry' : 'Add Food Entry'}
+              Add Food Entry
             </button>
           </div>
         </form>

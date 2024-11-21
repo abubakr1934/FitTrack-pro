@@ -10,7 +10,6 @@ const ExerciseForm = () => {
     muscleGroup: "",
     duration: "",
   });
-  const [editingExercise, setEditingExercise] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -71,33 +70,6 @@ const ExerciseForm = () => {
     }
   };
 
-  const handleEditExercise = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      await axios.put(
-        `http://localhost:8000/editExercise/${editingExercise._id}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        }
-      );
-
-      // Refetch exercises after successful edit
-      fetchExercisesForToday();
-
-      // Reset form data and close modal
-      closeModal();
-    } catch (error) {
-      setError("Failed to edit exercise.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeleteExercise = async (exerciseId) => {
     setLoading(true);
     setError(null);
@@ -118,28 +90,17 @@ const ExerciseForm = () => {
     }
   };
 
-  const openModal = (exercise = null) => {
-    if (exercise) {
-      setEditingExercise(exercise);
-      setFormData({
-        exerciseName: exercise.exercises[0].exerciseName,
-        muscleGroup: exercise.exercises[0].muscleGroup,
-        duration: exercise.exercises[0].duration,
-      });
-    } else {
-      setEditingExercise(null);
-      setFormData({
-        exerciseName: "",
-        muscleGroup: "",
-        duration: "",
-      });
-    }
+  const openModal = () => {
+    setFormData({
+      exerciseName: "",
+      muscleGroup: "",
+      duration: "",
+    });
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setEditingExercise(null);
     setFormData({
       exerciseName: "",
       muscleGroup: "",
@@ -193,12 +154,6 @@ const ExerciseForm = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
-                    onClick={() => openModal(exercise)}
-                    className="text-white bg-blue-500 px-4 py-2 rounded-lg mr-2"
-                  >
-                    Edit
-                  </button>
-                  <button
                     onClick={() => handleDeleteExercise(exercise._id)}
                     className="text-white bg-red-500 px-4 py-2 rounded-lg"
                   >
@@ -220,14 +175,12 @@ const ExerciseForm = () => {
       </div>
 
       <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <h3 className="text-lg font-medium mb-4">
-          {editingExercise ? "Edit Exercise" : "Add Exercise"}
-        </h3>
+        <h3 className="text-lg font-medium mb-4">Add Exercise</h3>
         <form
           className="border-2 rounded-lg px-2 py-2 border-black m-4"
           onSubmit={(e) => {
             e.preventDefault();
-            editingExercise ? handleEditExercise() : handleAddExercise();
+            handleAddExercise();
           }}
         >
           <div className="mb-4">
@@ -271,7 +224,7 @@ const ExerciseForm = () => {
               type="submit"
               className="bg-blue-500 text-white px-4 py-2 rounded"
             >
-              {editingExercise ? "Update Exercise" : "Add Exercise"}
+              Add Exercise
             </button>
           </div>
         </form>
