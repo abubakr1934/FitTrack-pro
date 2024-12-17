@@ -1,4 +1,12 @@
 {
+  "name": "fittrack-pro-backend",
+  "version": "1.0.0",
+  "main": "backend/routes/index.js",
+  "scripts": {
+    "start": "node backend/routes/index.js",
+    "dev": "nodemon backend/routes/index.js",
+    "build": "echo \"No build step needed for this backend project\""
+  },
   "dependencies": {
     "@google/generative-ai": "^0.19.0",
     "cors": "^2.8.5",
@@ -8,5 +16,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.8.1",
     "mongoose": "^8.6.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
   }
 }
