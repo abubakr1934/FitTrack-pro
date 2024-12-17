@@ -148,7 +148,7 @@ app.post("/addExercise", authenticateToken, async (req, res) => {
   try {
     const nutritionixResponse = await axios.post('https://trackapi.nutritionix.com/v2/natural/exercise', {
       query: `${exerciseName} for ${duration} minutes`,
-      gender: 'male', 
+      gender: user.profile.gender, 
       weight_kg: user.profile.weight, 
       height_cm: user.profile.height, 
       age: user.profile.age, 
@@ -187,42 +187,7 @@ app.post("/addExercise", authenticateToken, async (req, res) => {
 });
 
 // Edit exercise
-app.put("/editExercise/:exerciseId", authenticateToken, async (req, res) => {
-  const { exerciseId } = req.params;
-  const { user } = req.user;
-  const { exerciseName, muscleGroup, duration, caloriesBurned } = req.body;
 
-  try {
-    const exc = await Exercise.findOne({ user: user._id, _id: exerciseId });
-
-    if (!exc) {
-      return res.status(400).json({
-        error: true,
-        message: "No exercise found",
-      });
-    }
-
-    if (exerciseName) exc.exercises[0].exerciseName = exerciseName;
-    if (muscleGroup) exc.exercises[0].muscleGroup = muscleGroup;
-    if (duration) exc.exercises[0].duration = duration;
-    if (caloriesBurned) exc.exercises[0].caloriesBurned = caloriesBurned;
-    exc.totalCaloriesBurned = caloriesBurned;
-
-    await exc.save();
-
-    return res.json({
-      error: false,
-      exc,
-      message: "Exercise details updated successfully",
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      error: true,
-      message: "Internal server error",
-    });
-  }
-});
 
 // Delete exercise
 app.delete("/deleteExercise/:exerciseId", authenticateToken, async (req, res) => {
@@ -258,17 +223,16 @@ app.delete("/deleteExercise/:exerciseId", authenticateToken, async (req, res) =>
   }
 });
 
-// Get exercises for today
 app.get('/getExercisesForToday', authenticateToken, async (req, res) => {
   const { user } = req.user;
-  const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0]; 
 
   try {
     const exercises = await Exercise.find({
       user: user._id,
       date: {
-        $gte: new Date(today), // Greater than or equal to today's date at 00:00:00
-        $lte: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000) // Less than tomorrow's date at 00:00:00
+        $gte: new Date(today), 
+        $lte: new Date(new Date(today).getTime() + 24 * 60 * 60 * 1000) 
       }
     });
 
@@ -286,9 +250,7 @@ app.get('/getExercisesForToday', authenticateToken, async (req, res) => {
   }
 });
 
-//add food api
 
-// Add Calorie Intake
 app.post("/addCalorieIntake", authenticateToken, async (req, res) => {
   const { foodName, quantity } = req.body;
   const { user } = req.user;
@@ -349,51 +311,6 @@ app.post("/addCalorieIntake", authenticateToken, async (req, res) => {
   }
 });
 
-// Update Calorie Intake
-app.put(
-  "/updateCalorieIntake/:calorieIntakeId",
-  authenticateToken,
-  async (req, res) => {
-    const { calorieIntakeId } = req.params;
-    const { user } = req.user;
-    const { foodName, quantity, fat, protein, carbs, calories } = req.body;
-
-    // Validate required fields
-    if (!foodName || !quantity || !fat || !protein || !carbs || !calories) {
-      return res.status(400).json({
-        error: true,
-        message: "Please provide all required fields: foodName, quantity, fat, protein, carbs, and calories",
-      });
-    }
-
-    try {
-      const updatedCalorieIntake = await CalorieIntake.findOneAndUpdate(
-        { _id: calorieIntakeId, user: user._id },
-        { foodName, quantity, fat, protein, carbs, calories },
-        { new: true } // Return the updated document
-      );
-
-      if (!updatedCalorieIntake) {
-        return res.status(404).json({
-          error: true,
-          message: "Calorie intake record not found or you don't have permission to update this record",
-        });
-      }
-
-      return res.status(200).json({
-        error: false,
-        updatedCalorieIntake,
-        message: "Calorie intake updated successfully",
-      });
-    } catch (err) {
-      return res.status(500).json({
-        error: true,
-        message: "An error occurred while updating the calorie intake record",
-        details: err.message,
-      });
-    }
-  }
-);
 
 // Delete Calorie Intake
 app.delete(
@@ -933,58 +850,7 @@ app.delete("/delete-diet-plan", authenticateToken, async (req, res) => {
     });
   }
 });
-app.post("/getExerciseDataRapidApi", async (req, res) => {
-  const { exercise } = req.body;
-  if (!exercise) {
-    return res.status(400).json({
-      error: true,
-      message: "Please enter the exercise name",
-    });
-  }
 
-  try {
-    const options = {
-      method: "GET",
-      hostname: "calories-burned-by-api-ninjas.p.rapidapi.com",
-      port: null,
-      path: `/v1/caloriesburned?activity=${encodeURIComponent(exercise)}`,
-      headers: {
-        "x-rapidapi-key": "54e2824a09mshb91e1652b8ff92dp112556jsned82753eaa1e",
-        "x-rapidapi-host": "calories-burned-by-api-ninjas.p.rapidapi.com",
-      },
-    };
-
-    const apiReq = https.request(options, function (apiRes) {
-      const chunks = [];
-
-      apiRes.on("data", function (chunk) {
-        chunks.push(chunk);
-      });
-
-      apiRes.on("end", function () {
-        const body = Buffer.concat(chunks).toString();
-        try {
-          const parsedBody = JSON.parse(body);
-          res.json(parsedBody); // Respond with the data received from RapidAPI
-        } catch (parseError) {
-          res.status(500).json({ error: "Error parsing data from RapidAPI" });
-        }
-      });
-    });
-
-    apiReq.on("error", (e) => {
-      res.status(500).json({ error: "Error fetching data from RapidAPI" });
-    });
-
-    apiReq.end();
-  } catch (error) {
-    return res.status(500).json({
-      error: true,
-      message: "Some internal error occurred",
-      errorMessage: error.message,
-    });
-  }
-});
 app.listen(8000, () => {
   console.log("server is running at port 8000");
 });
@@ -1239,199 +1105,6 @@ app.get('/getCalorieComparisonForPast5Days', authenticateToken, async (req, res)
   }
 });
 
-app.post("/generate-exercise-plan", authenticateToken, async (req, res) => {
-  const { user } = req.user;
-  const { goal, exerciseSessionPerWeek, healthConditions } = req.body;
-  const userId = user._id;
 
-  if (!goal || !exerciseSessionPerWeek || !healthConditions) {
-    return res.status(400).json({
-      error: true,
-      message: "Please provide all required fields: goal, exerciseSessionPerWeek, and healthConditions",
-    });
-  }
-
-  if (!userId || !user.profile || !user.profile.height || !user.profile.weight) {
-    return res.status(400).json({
-      error: true,
-      message: "User profile is incomplete. Height and weight must be provided in the user's profile.",
-    });
-  }
-
-  const height=user.profile.height;
-  const weight=user.profile.weight;
-  const calorieIntakeGoal=user.profile.calorieIntakeGoal;
-  const calorieBurntGoal=user.profile.calorieBurntGoal;
-
-
-  const prompt = `
-    Create an exercise plan for a person with the following details:
-    - Current weight: ${weight} kg
-    - Height: ${height} cm
-    - Goal: ${goal} (e.g., lose weight, gain muscle, maintain weight)
-    - Exercise sessions per week: ${exerciseSessionPerWeek}
-    - Health conditions: ${healthConditions}
-
-    The exercise plan should include workout names, duration, intensity, and calories burned for each session. Additionally, provide insights about the plan, including a timeline for achieving the goal. The timeline should be divided into three phases: first 4 weeks, next 4 weeks, and the final 4 weeks. For each phase, provide only the expected numerical weight loss or gain in kilograms. Format the response as JSON with the following structure:
-    {
-      "exercise_plan": {
-        "workouts": [
-          {
-            "workoutName": "Workout Name",
-            "duration": "Duration in minutes",
-            "intensity": "Intensity level (low, moderate, high)",
-            "caloriesBurned": "Calories burned in kcal"
-          }
-        ]
-      },
-      "insights": {
-        "timeline": {
-          "first_4_weeks": "Expected weight loss or gain in kilograms (e.g., 1-2 kg loss)",
-          "next_4_weeks": "Expected weight loss or gain in kilograms (e.g., 2-3 kg loss)",
-          "final_4_weeks": "Expected weight loss or gain in kilograms (e.g., 3-4 kg loss)"
-        }
-      }
-    }
-  `;
-
-  try {
-    const chatSession = model.startChat({
-      generationConfig,
-      history: [],
-    });
-    const result = await chatSession.sendMessage(prompt);
-
-    const jsonStart = result.response.text().indexOf("{");
-    const jsonEnd = result.response.text().lastIndexOf("}");
-    const jsonResponse = result.response.text().substring(jsonStart, jsonEnd + 1);
-
-    let exercisePlanResponse;
-    try {
-      exercisePlanResponse = JSON.parse(jsonResponse);
-    } catch (error) {
-      return res.status(400).json({
-        error: true,
-        message: "Error parsing exercise plan response. Response was: " + jsonResponse,
-      });
-    }
-
-    if (
-      !exercisePlanResponse.exercise_plan ||
-      !exercisePlanResponse.exercise_plan.workouts ||
-      !exercisePlanResponse.insights ||
-      !exercisePlanResponse.insights.timeline
-    ) {
-      return res.status(400).json({
-        error: true,
-        message: "Invalid exercise plan response structure. Response was: " + jsonResponse,
-      });
-    }
-    exercisePlanResponse.exercise_plan.workouts.forEach((workout) => {
-      workout.caloriesBurned = parseFloat(
-        workout.caloriesBurned.replace("kcal", "").trim()
-      );
-    });
-
-    const exercisePlanNew = new ExercisePlan({
-      user: userId,
-      goal,
-      exerciseSessionPerWeek,
-      healthConditions,
-      calorieIntakeGoal: user.profile.calorieIntakeGoal,
-      calorieBurntGoal: user.profile.calorieBurntGoal,
-      exercises: exercisePlanResponse.exercise_plan.workouts,
-    });
-
-    console.log("Exercise Plan to be saved:", exercisePlanNew);
-
-    await exercisePlanNew.save();
-
-    return res.status(200).json({
-      error: false,
-      message: "Exercise plan generated and saved successfully",
-      exercisePlan: exercisePlanNew,
-      timeline: exercisePlanResponse.insights.timeline,
-    });
-  } catch (error) {
-    console.error("Internal Server Error:", error);
-    return res.status(500).json({
-      error: true,
-      message: "Some internal error occurred",
-    });
-  }
-});
-app.get("/get-exercise-plan", authenticateToken, async (req, res) => {
-  const { user } = req.user;
-  const userId = user._id;
-
-  // Ensure userId is provided
-  if (!userId) {
-    return res.status(404).json({
-      error: true,
-      message: "User not found",
-    });
-  }
-
-  try {
-    // Find the exercise plan for the user
-    const exercisePlanDoc = await ExercisePlan.findOne({ user: userId });
-
-    if (!exercisePlanDoc) {
-      return res.status(404).json({
-        error: true,
-        message: "No exercise plan initialized for this user",
-      });
-    }
-
-    return res.status(200).json({
-      error: false,
-      message: "Exercise plan retrieved successfully",
-      exercisePlan: exercisePlanDoc,
-    });
-  } catch (error) {
-    console.error("Internal Server Error:", error);
-    return res.status(500).json({
-      error: true,
-      message: "Internal error occurred",
-    });
-  }
-});
-app.delete("/delete-exercise-plan", authenticateToken, async (req, res) => {
-  const { user } = req.user;
-  const userId = user._id;
-
-  // Ensure userId is provided
-  if (!userId) {
-    return res.status(404).json({
-      error: true,
-      message: "User not found",
-    });
-  }
-
-  try {
-    // Find and delete the exercise plan
-    const exercisePlanDoc = await ExercisePlan.findOne({ user: userId });
-
-    if (!exercisePlanDoc) {
-      return res.status(404).json({
-        error: true,
-        message: "No exercise plan initialized for this user",
-      });
-    }
-
-    await exercisePlanDoc.deleteOne();
-
-    return res.status(200).json({
-      error: false,
-      message: "Exercise plan deleted successfully",
-    });
-  } catch (error) {
-    console.error("Internal Server Error:", error);
-    return res.status(500).json({
-      error: true,
-      message: "Internal error occurred",
-    });
-  }
-});
 
 module.exports = app;
